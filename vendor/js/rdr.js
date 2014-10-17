@@ -5346,12 +5346,21 @@ RDR = (function(_super) {
   };
 
   _Class.prototype.Boot = function() {
-    var r;
-    this.Info("===== App is booting. =====");
+    var index, init, r, _i, _len, _ref;
+    this.Info("===== App is initializing. =====");
+    _ref = this.Initializers;
+    for (index = _i = 0, _len = _ref.length; _i < _len; index = ++_i) {
+      init = _ref[index];
+      this.Info("Boot: Initializer Executing: #" + index);
+      if (typeof init === "function") {
+        init();
+      }
+    }
+    this.Info("Boot: App is Booting");
     this.createTemplates();
     r = this;
     if (/\#|hash/.test(this.Config.history)) {
-      this.Info("  Boot: RDR history is now: #");
+      this.Info("Boot: RDR History is Now: #");
       this.Config.history = "#";
       if (window.location.hash === "") {
         window.location.hash = "#/";
@@ -5449,9 +5458,9 @@ RDR = (function(_super) {
       view_path = "/" + (path.join("/"));
       dasherized_path = path.join("-");
       view_paths.push(view_path);
-      this.Info("Router: Fetching Controller: " + view_path);
+      this.Info("Router: Fetching View: " + view_path);
       if ($(".rdr-template-" + dasherized_path).length) {
-        this.Debug("Router: Controller Already Present: " + view_path);
+        this.Debug("Router: View Already Present: " + view_path);
         if (!placer.length) {
           placer = $(".rdr-template-" + dasherized_path + "-outlet");
         }
@@ -5526,6 +5535,7 @@ RDR = (function(_super) {
             this.findRoute(path, false, selected_path, children);
           }
           break;
+          false;
         }
       }
     }

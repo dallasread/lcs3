@@ -5347,12 +5347,21 @@ RDR = (function(_super) {
   };
 
   _Class.prototype.Boot = function() {
-    var r;
-    this.Info("===== App is booting. =====");
+    var index, init, r, _i, _len, _ref;
+    this.Info("===== App is initializing. =====");
+    _ref = this.Initializers;
+    for (index = _i = 0, _len = _ref.length; _i < _len; index = ++_i) {
+      init = _ref[index];
+      this.Info("Boot: Initializer Executing: #" + index);
+      if (typeof init === "function") {
+        init();
+      }
+    }
+    this.Info("Boot: App is Booting");
     this.createTemplates();
     r = this;
     if (/\#|hash/.test(this.Config.history)) {
-      this.Info("  Boot: RDR history is now: #");
+      this.Info("Boot: RDR History is Now: #");
       this.Config.history = "#";
       if (window.location.hash === "") {
         window.location.hash = "#/";
@@ -5450,9 +5459,9 @@ RDR = (function(_super) {
       view_path = "/" + (path.join("/"));
       dasherized_path = path.join("-");
       view_paths.push(view_path);
-      this.Info("Router: Fetching Controller: " + view_path);
+      this.Info("Router: Fetching View: " + view_path);
       if ($(".rdr-template-" + dasherized_path).length) {
-        this.Debug("Router: Controller Already Present: " + view_path);
+        this.Debug("Router: View Already Present: " + view_path);
         if (!placer.length) {
           placer = $(".rdr-template-" + dasherized_path + "-outlet");
         }
@@ -5527,6 +5536,7 @@ RDR = (function(_super) {
             this.findRoute(path, false, selected_path, children);
           }
           break;
+          false;
         }
       }
     }
@@ -7241,6 +7251,274 @@ RDR = (function(_super) {
   }
 })();
 
+this["RDR"] = this["RDR"] || {};
+this["RDR"]["prototype"] = this["RDR"]["prototype"] || {};
+this["RDR"]["prototype"]["Templates"] = this["RDR"]["prototype"]["Templates"] || {};
+
+this["RDR"]["prototype"]["Templates"]["/admin"] = Handlebars.template({"compiler":[6,">= 2.0.0-beta.1"],"main":function(depth0,helpers,partials,data) {
+  var stack1, helper, functionType="function", helperMissing=helpers.helperMissing, escapeExpression=this.escapeExpression, buffer = "<div class=\"admin\">\n<div class=\"topbar\">\n<div class=\"menu_wrapper\">\n<!--<p class=\"fa fa-bars open_menu icon\"></p>-->\n</div>\n<h1>"
+    + escapeExpression(((helper = (helper = helpers.name || (depth0 != null ? depth0.name : depth0)) != null ? helper : helperMissing),(typeof helper === functionType ? helper.call(depth0, {"name":"name","hash":{},"data":data}) : helper)))
+    + "</h1>\n<p class=\"close icon\">&times;</p>\n</div>\n\n<div class=\"leftbar\">\n<a href=\"#\" class=\"toggle_status offline\">\n<i class=\"fa fa-toggle-on\"></i>\n<i class=\"fa fa-toggle-off\"></i>\n<span class=\"toggle-on\">Online</span>\n<span class=\"toggle-off\">Offline</span>\n</a>\n\n<a href=\"#/admin/visitors\">\n<i class=\"fa fa-comments icon\"></i>\nConvos\n</a>\n\n<a href=\"#/admin/agents\">\n<i class=\"fa fa-group icon\"></i>\nAgents\n</a>\n\n<a href=\"#/admin/profile\">\n<i class=\"fa fa-user icon\"></i>\nMy Profile\n</a>\n\n<a href=\"#/admin/settings\">\n<i class=\"fa fa-cog icon\"></i>\nSettings\n</a>\n\n<a href=\"#/admin/upgrade\">\n<!-- hide_if_upgraded hide_unless_admin -->\n<i class=\"fa fa-bolt icon\"></i>\nUpgrade\n</a>\n</div>\n\n<div class=\"tabs\">\n";
+  stack1 = ((helper = (helper = helpers.outlet || (depth0 != null ? depth0.outlet : depth0)) != null ? helper : helperMissing),(typeof helper === functionType ? helper.call(depth0, {"name":"outlet","hash":{},"data":data}) : helper));
+  if (stack1 != null) { buffer += stack1; }
+  return buffer + "\n</div>\n\n</div>\n";
+},"useData":true});
+
+
+
+this["RDR"]["prototype"]["Templates"]["/admin/agents"] = Handlebars.template({"1":function(depth0,helpers,partials,data) {
+  var stack1, helper, functionType="function", helperMissing=helpers.helperMissing, escapeExpression=this.escapeExpression, buffer = "<tr>\n<td>";
+  stack1 = helpers['if'].call(depth0, (depth0 != null ? depth0.online : depth0), {"name":"if","hash":{},"fn":this.program(2, data),"inverse":this.noop,"data":data});
+  if (stack1 != null) { buffer += stack1; }
+  return buffer + "</td>\n<td>"
+    + escapeExpression(((helper = (helper = helpers.name || (depth0 != null ? depth0.name : depth0)) != null ? helper : helperMissing),(typeof helper === functionType ? helper.call(depth0, {"name":"name","hash":{},"data":data}) : helper)))
+    + "</td>\n<td>"
+    + escapeExpression(((helper = (helper = helpers.email || (depth0 != null ? depth0.email : depth0)) != null ? helper : helperMissing),(typeof helper === functionType ? helper.call(depth0, {"name":"email","hash":{},"data":data}) : helper)))
+    + "</td>\n<td><button>Remove</button></td>\n</tr>\n";
+},"2":function(depth0,helpers,partials,data) {
+  return "&check;";
+  },"compiler":[6,">= 2.0.0-beta.1"],"main":function(depth0,helpers,partials,data) {
+  var stack1, buffer = "<div class=\"tab\">\n\n<table>\n<thead>\n<tr>\n<th>Status</th>\n<th>Name</th>\n<th>Email</th>\n<th></th>\n</tr>\n</thead>\n<tbody>\n";
+  stack1 = helpers.each.call(depth0, (depth0 != null ? depth0.arrangedContent : depth0), {"name":"each","hash":{},"fn":this.program(1, data),"inverse":this.noop,"data":data});
+  if (stack1 != null) { buffer += stack1; }
+  return buffer + "</tbody>\n</table>\n\n<button>Add Agent</button>\n\n</div>\n";
+},"useData":true});
+
+
+
+this["RDR"]["prototype"]["Templates"]["/admin/index"] = Handlebars.template({"compiler":[6,">= 2.0.0-beta.1"],"main":function(depth0,helpers,partials,data) {
+  return "<div class=\"tab\">\nThis is main admin tab.\n</div>\n";
+  },"useData":true});
+
+
+
+this["RDR"]["prototype"]["Templates"]["/admin/loading"] = Handlebars.template({"compiler":[6,">= 2.0.0-beta.1"],"main":function(depth0,helpers,partials,data) {
+  return "<div class=\"admin_loading\"></div>\n";
+  },"useData":true});
+
+
+
+this["RDR"]["prototype"]["Templates"]["/admin/profile"] = Handlebars.template({"compiler":[6,">= 2.0.0-beta.1"],"main":function(depth0,helpers,partials,data) {
+  return "<div class=\"tab\">\nProfile\n</div>\n";
+  },"useData":true});
+
+
+
+this["RDR"]["prototype"]["Templates"]["/admin/settings"] = Handlebars.template({"compiler":[6,">= 2.0.0-beta.1"],"main":function(depth0,helpers,partials,data) {
+  var stack1, helper, functionType="function", helperMissing=helpers.helperMissing, buffer = "Settings.\n\n<div class=\"tab\">\n<a href=\"#/admin/settings/index\">General</a>\n<a href=\"#/admin/settings/triggers\">Triggers</a>\n<a href=\"#/admin/settings/canned\">Canned</a>\n<a href=\"#/admin/settings/introducers\">Introducers</a>\n\n";
+  stack1 = ((helper = (helper = helpers.outlet || (depth0 != null ? depth0.outlet : depth0)) != null ? helper : helperMissing),(typeof helper === functionType ? helper.call(depth0, {"name":"outlet","hash":{},"data":data}) : helper));
+  if (stack1 != null) { buffer += stack1; }
+  return buffer + "\n</div>\n";
+},"useData":true});
+
+
+
+this["RDR"]["prototype"]["Templates"]["/admin/settings/canned"] = Handlebars.template({"1":function(depth0,helpers,partials,data) {
+  var stack1, helper, functionType="function", helperMissing=helpers.helperMissing, escapeExpression=this.escapeExpression, lambda=this.lambda;
+  return "<tr>\n<td>"
+    + escapeExpression(((helper = (helper = helpers.permalink || (depth0 != null ? depth0.permalink : depth0)) != null ? helper : helperMissing),(typeof helper === functionType ? helper.call(depth0, {"name":"permalink","hash":{},"data":data}) : helper)))
+    + "</td>\n<td>"
+    + escapeExpression(lambda(((stack1 = (depth0 != null ? depth0.message : depth0)) != null ? stack1.body : stack1), depth0))
+    + "</td>\n<td><button>Remove</button></td>\n</tr>\n";
+},"compiler":[6,">= 2.0.0-beta.1"],"main":function(depth0,helpers,partials,data) {
+  var stack1, buffer = "Canned.\n\n<table>\n<thead>\n<tr>\n<th>Hashtag</th>\n<th>Message</th>\n<th>Delete</th>\n</tr>\n</thead>\n<tbody>\n";
+  stack1 = helpers.each.call(depth0, (depth0 != null ? depth0.arrangedContent : depth0), {"name":"each","hash":{},"fn":this.program(1, data),"inverse":this.noop,"data":data});
+  if (stack1 != null) { buffer += stack1; }
+  return buffer + "</tbody>\n</table>\n\n<button>Add Canned Message</button>\n";
+},"useData":true});
+
+
+
+this["RDR"]["prototype"]["Templates"]["/admin/settings/index"] = Handlebars.template({"compiler":[6,">= 2.0.0-beta.1"],"main":function(depth0,helpers,partials,data) {
+  var helperMissing=helpers.helperMissing, escapeExpression=this.escapeExpression;
+  return "General Settings. Include, exclude,\n\n<form>\n<div class=\"field\">\n<label>\nInclude<br>\n<input type=\"text\" "
+    + escapeExpression(((helpers['bind-attr'] || (depth0 && depth0['bind-attr']) || helperMissing).call(depth0, {"name":"bind-attr","hash":{
+    'value': ((depth0 != null ? depth0.include : depth0))
+  },"data":data})))
+    + ">\n</label>\n</div>\n\n<div class=\"field\">\n<label>\nExclude<br>\n<input type=\"text\" "
+    + escapeExpression(((helpers['bind-attr'] || (depth0 && depth0['bind-attr']) || helperMissing).call(depth0, {"name":"bind-attr","hash":{
+    'value': ((depth0 != null ? depth0.exclude : depth0))
+  },"data":data})))
+    + ">\n</label>\n</div>\n\n<div class=\"actions\">\n<input type=\"submit\">\n</div>\n</form>\n";
+},"useData":true});
+
+
+
+this["RDR"]["prototype"]["Templates"]["/admin/settings/introducers"] = Handlebars.template({"1":function(depth0,helpers,partials,data) {
+  var stack1, helper, functionType="function", helperMissing=helpers.helperMissing, escapeExpression=this.escapeExpression, buffer = "<tr>\n<td>"
+    + escapeExpression(((helper = (helper = helpers.id || (depth0 != null ? depth0.id : depth0)) != null ? helper : helperMissing),(typeof helper === functionType ? helper.call(depth0, {"name":"id","hash":{},"data":data}) : helper)))
+    + "</td>\n<td>"
+    + escapeExpression(((helper = (helper = helpers.label || (depth0 != null ? depth0.label : depth0)) != null ? helper : helperMissing),(typeof helper === functionType ? helper.call(depth0, {"name":"label","hash":{},"data":data}) : helper)))
+    + "</td>\n<td>";
+  stack1 = helpers['if'].call(depth0, (depth0 != null ? depth0.required : depth0), {"name":"if","hash":{},"fn":this.program(2, data),"inverse":this.noop,"data":data});
+  if (stack1 != null) { buffer += stack1; }
+  return buffer + "</td>\n<td>"
+    + escapeExpression(((helper = (helper = helpers.type || (depth0 != null ? depth0.type : depth0)) != null ? helper : helperMissing),(typeof helper === functionType ? helper.call(depth0, {"name":"type","hash":{},"data":data}) : helper)))
+    + "</td>\n<td>"
+    + escapeExpression(((helper = (helper = helpers.validator || (depth0 != null ? depth0.validator : depth0)) != null ? helper : helperMissing),(typeof helper === functionType ? helper.call(depth0, {"name":"validator","hash":{},"data":data}) : helper)))
+    + "</td>\n<td>"
+    + escapeExpression(((helper = (helper = helpers.ordinal || (depth0 != null ? depth0.ordinal : depth0)) != null ? helper : helperMissing),(typeof helper === functionType ? helper.call(depth0, {"name":"ordinal","hash":{},"data":data}) : helper)))
+    + "</td>\n<td><button>Remove</button></td>\n</tr>\n";
+},"2":function(depth0,helpers,partials,data) {
+  return "&check;";
+  },"compiler":[6,">= 2.0.0-beta.1"],"main":function(depth0,helpers,partials,data) {
+  var stack1, buffer = "Introducer Fields.\n\n<table>\n<thead>\n<tr>\n<th>Name</th>\n<th>Label</th>\n<th>Required</th>\n<th>Type</th>\n<th>Validator</th>\n<th>Ordinal</th>\n<th>Delete</th>\n</tr>\n</thead>\n<tbody>\n";
+  stack1 = helpers.each.call(depth0, (depth0 != null ? depth0.arrangedContent : depth0), {"name":"each","hash":{},"fn":this.program(1, data),"inverse":this.noop,"data":data});
+  if (stack1 != null) { buffer += stack1; }
+  return buffer + "</tbody>\n</table>\n\n<button>Add Introducer</button>\n";
+},"useData":true});
+
+
+
+this["RDR"]["prototype"]["Templates"]["/admin/settings/loading"] = Handlebars.template({"compiler":[6,">= 2.0.0-beta.1"],"main":function(depth0,helpers,partials,data) {
+  return "<div class=\"admin_loading\"></div>\n";
+  },"useData":true});
+
+
+
+this["RDR"]["prototype"]["Templates"]["/admin/settings/triggers"] = Handlebars.template({"1":function(depth0,helpers,partials,data) {
+  var stack1, helper, functionType="function", helperMissing=helpers.helperMissing, escapeExpression=this.escapeExpression, lambda=this.lambda;
+  return "<tr>\n<td>"
+    + escapeExpression(((helper = (helper = helpers.delay || (depth0 != null ? depth0.delay : depth0)) != null ? helper : helperMissing),(typeof helper === functionType ? helper.call(depth0, {"name":"delay","hash":{},"data":data}) : helper)))
+    + "</td>\n<td>"
+    + escapeExpression(((helper = (helper = helpers.exclude || (depth0 != null ? depth0.exclude : depth0)) != null ? helper : helperMissing),(typeof helper === functionType ? helper.call(depth0, {"name":"exclude","hash":{},"data":data}) : helper)))
+    + "</td>\n<td>"
+    + escapeExpression(((helper = (helper = helpers.include || (depth0 != null ? depth0.include : depth0)) != null ? helper : helperMissing),(typeof helper === functionType ? helper.call(depth0, {"name":"include","hash":{},"data":data}) : helper)))
+    + "</td>\n<td>"
+    + escapeExpression(lambda(((stack1 = (depth0 != null ? depth0.message : depth0)) != null ? stack1.body : stack1), depth0))
+    + "</td>\n<td><button>Remove</button></td>\n</tr>\n";
+},"compiler":[6,">= 2.0.0-beta.1"],"main":function(depth0,helpers,partials,data) {
+  var stack1, buffer = "Triggers.\n\n<table>\n<thead>\n<tr>\n<th>Delay</th>\n<th>Exclude</th>\n<th>Include</th>\n<th>Message</th>\n<th>Delete</th>\n</tr>\n</thead>\n<tbody>\n";
+  stack1 = helpers.each.call(depth0, (depth0 != null ? depth0.arrangedContent : depth0), {"name":"each","hash":{},"fn":this.program(1, data),"inverse":this.noop,"data":data});
+  if (stack1 != null) { buffer += stack1; }
+  return buffer + "</tbody>\n</table>\n\n<button>Add Trigger</button>\n";
+},"useData":true});
+
+
+
+this["RDR"]["prototype"]["Templates"]["/admin/upgrade"] = Handlebars.template({"compiler":[6,">= 2.0.0-beta.1"],"main":function(depth0,helpers,partials,data) {
+  return "<div class=\"tab\">\nThis is how to upgrade.\n</div>\n";
+  },"useData":true});
+
+
+
+this["RDR"]["prototype"]["Templates"]["/admin/visitors"] = Handlebars.template({"1":function(depth0,helpers,partials,data) {
+  var stack1, helper, helperMissing=helpers.helperMissing, escapeExpression=this.escapeExpression, functionType="function", buffer = "<a href=\"#/admin/visitors/visitor\" . class=\"visitor\">\n<!-- classNameBindings=\"";
+  stack1 = helpers['if'].call(depth0, (depth0 != null ? depth0.online : depth0), {"name":"if","hash":{},"fn":this.program(2, data),"inverse":this.noop,"data":data});
+  if (stack1 != null) { buffer += stack1; }
+  buffer += " ";
+  stack1 = helpers['if'].call(depth0, (depth0 != null ? depth0.has_unread : depth0), {"name":"if","hash":{},"fn":this.program(4, data),"inverse":this.noop,"data":data});
+  if (stack1 != null) { buffer += stack1; }
+  return buffer + "\" -->\n<span class=\"name\">\n<span "
+    + escapeExpression(((helpers['bind-attr'] || (depth0 && depth0['bind-attr']) || helperMissing).call(depth0, {"name":"bind-attr","hash":{
+    'title': ((depth0 != null ? depth0.email : depth0))
+  },"data":data})))
+    + ">"
+    + escapeExpression(((helper = (helper = helpers.name || (depth0 != null ? depth0.name : depth0)) != null ? helper : helperMissing),(typeof helper === functionType ? helper.call(depth0, {"name":"name","hash":{},"data":data}) : helper)))
+    + "</span>\n</span>\n<span class=\"icons\">\n<i title=\"Apple\" class=\"fa fa-apple\"></i>\n<i title=\"Windows\" class=\"fa fa-windows\"></i>\n<i title=\"Canada\" class=\"fa fa-flag\"></i>\n</span>\n<span class=\"last_seen\">\n<span "
+    + escapeExpression(((helpers['bind-attr'] || (depth0 && depth0['bind-attr']) || helperMissing).call(depth0, {"name":"bind-attr","hash":{
+    'title': ((depth0 != null ? depth0.updated_at : depth0))
+  },"data":data})))
+    + ">3 hours ago</span>\n</span>\n<span class=\"clear\"></span>\n</a>\n";
+},"2":function(depth0,helpers,partials,data) {
+  return "online";
+  },"4":function(depth0,helpers,partials,data) {
+  return "has_unread";
+  },"compiler":[6,">= 2.0.0-beta.1"],"main":function(depth0,helpers,partials,data) {
+  var stack1, helper, functionType="function", helperMissing=helpers.helperMissing, buffer = "Visitors.\n\n<div class=\"tab\" data-tab=\"!/visitors\">\n\n<input type=\"text\" class=\"visitors_search\" placeholder=\"Search...\">\n\n<div class=\"visitors\">\n\n";
+  stack1 = helpers.each.call(depth0, (depth0 != null ? depth0.arrangedContent : depth0), {"name":"each","hash":{},"fn":this.program(1, data),"inverse":this.noop,"data":data});
+  if (stack1 != null) { buffer += stack1; }
+  buffer += "\n</div>\n\n";
+  stack1 = ((helper = (helper = helpers.outlet || (depth0 != null ? depth0.outlet : depth0)) != null ? helper : helperMissing),(typeof helper === functionType ? helper.call(depth0, {"name":"outlet","hash":{},"data":data}) : helper));
+  if (stack1 != null) { buffer += stack1; }
+  return buffer + "\n\n</div>\n";
+},"useData":true});
+
+
+
+this["RDR"]["prototype"]["Templates"]["/admin/visitors/index"] = Handlebars.template({"compiler":[6,">= 2.0.0-beta.1"],"main":function(depth0,helpers,partials,data) {
+  return "<div class=\"visitor_index\">\n&larr; &nbsp; Choose a conversation on the left.\n</div>\n";
+  },"useData":true});
+
+
+
+this["RDR"]["prototype"]["Templates"]["/admin/visitors/visitor"] = Handlebars.template({"1":function(depth0,helpers,partials,data) {
+  var helper, functionType="function", helperMissing=helpers.helperMissing, escapeExpression=this.escapeExpression;
+  return "<li class=\"tag\">\n<span class=\"tag_label\">"
+    + escapeExpression(((helper = (helper = helpers.name || (depth0 != null ? depth0.name : depth0)) != null ? helper : helperMissing),(typeof helper === functionType ? helper.call(depth0, {"name":"name","hash":{},"data":data}) : helper)))
+    + "</span>\n<span class=\"delete_tag\">&times;</span>\n</li>\n";
+},"3":function(depth0,helpers,partials,data) {
+  var stack1, helper, helperMissing=helpers.helperMissing, escapeExpression=this.escapeExpression, functionType="function", buffer = "<div "
+    + escapeExpression(((helpers['bind-attr'] || (depth0 && depth0['bind-attr']) || helperMissing).call(depth0, {"name":"bind-attr","hash":{
+    'class': (":message from_agent:from_agent private:private")
+  },"data":data})))
+    + ">\n";
+  stack1 = helpers['if'].call(depth0, (depth0 != null ? depth0['private'] : depth0), {"name":"if","hash":{},"fn":this.program(4, data),"inverse":this.noop,"data":data});
+  if (stack1 != null) { buffer += stack1; }
+  return buffer + "\n<div class=\"body\">\n"
+    + escapeExpression(((helper = (helper = helpers.body || (depth0 != null ? depth0.body : depth0)) != null ? helper : helperMissing),(typeof helper === functionType ? helper.call(depth0, {"name":"body","hash":{},"data":data}) : helper)))
+    + "\n</div>\n\n<div class=\"clear\"></div>\n</div>\n";
+},"4":function(depth0,helpers,partials,data) {
+  return "<i class=\"fa fa-lock lock\"></i>\n";
+  },"compiler":[6,">= 2.0.0-beta.1"],"main":function(depth0,helpers,partials,data) {
+  var stack1, helper, helperMissing=helpers.helperMissing, escapeExpression=this.escapeExpression, functionType="function", lambda=this.lambda, buffer = "<div class=\"visitor_profile_header\">\n<ul class=\"actions\">\n<li class=\"action archive\"><i class=\"fa fa-archive\" title=\"Archive\"></i></li>\n<li class=\"action\"><i class=\"fa fa-sign-out\" title=\"Transfer\"></i></li>\n</ul>\n\n"
+    + escapeExpression(((helpers['gravatar-image'] || (depth0 && depth0['gravatar-image']) || helperMissing).call(depth0, {"name":"gravatar-image","hash":{
+    'class': ("avatar"),
+    'size': ("250"),
+    'alt': ((depth0 != null ? depth0.name : depth0)),
+    'email': ((depth0 != null ? depth0.email : depth0))
+  },"data":data})))
+    + "\n\n<div class=\"info\">\n<h2 class=\"name\">\n"
+    + escapeExpression(((helper = (helper = helpers.name || (depth0 != null ? depth0.name : depth0)) != null ? helper : helperMissing),(typeof helper === functionType ? helper.call(depth0, {"name":"name","hash":{},"data":data}) : helper)))
+    + "\n<span class=\"show_more\">more...</span>\n</h2>\n\n<h3 class=\"location\">"
+    + escapeExpression(((helper = (helper = helpers.location || (depth0 != null ? depth0.location : depth0)) != null ? helper : helperMissing),(typeof helper === functionType ? helper.call(depth0, {"name":"location","hash":{},"data":data}) : helper)))
+    + "</h3>\n\n<p>\nServed by:\n"
+    + escapeExpression(lambda(((stack1 = (depth0 != null ? depth0.agent : depth0)) != null ? stack1.name : stack1), depth0))
+    + "\n</p>\n\n<ul class=\"tags\">\n";
+  stack1 = helpers.each.call(depth0, (depth0 != null ? depth0.tags : depth0), {"name":"each","hash":{},"fn":this.program(1, data),"inverse":this.noop,"data":data});
+  if (stack1 != null) { buffer += stack1; }
+  buffer += "</ul>\n</div>\n\n<div class=\"more\">\n<p>\n<span class=\"more_label\">Email</span>\n<span class=\"more_detail\">"
+    + escapeExpression(((helper = (helper = helpers.email || (depth0 != null ? depth0.email : depth0)) != null ? helper : helperMissing),(typeof helper === functionType ? helper.call(depth0, {"name":"email","hash":{},"data":data}) : helper)))
+    + "</span>\n<span class=\"clear\"></span>\n</p>\n<p>\n<span class=\"more_label\">Phone</span>\n<span class=\"more_detail\">"
+    + escapeExpression(((helper = (helper = helpers.mobile || (depth0 != null ? depth0.mobile : depth0)) != null ? helper : helperMissing),(typeof helper === functionType ? helper.call(depth0, {"name":"mobile","hash":{},"data":data}) : helper)))
+    + "</span>\n<span class=\"clear\"></span>\n</p>\n<p>\n<span class=\"more_label\">IP</span>\n<span class=\"more_detail\">"
+    + escapeExpression(((helper = (helper = helpers.ip || (depth0 != null ? depth0.ip : depth0)) != null ? helper : helperMissing),(typeof helper === functionType ? helper.call(depth0, {"name":"ip","hash":{},"data":data}) : helper)))
+    + "</span>\n<span class=\"clear\"></span>\n</p>\n<p>\n<span class=\"more_label\">Address</span>\n<span class=\"more_detail\">"
+    + escapeExpression(((helper = (helper = helpers.address || (depth0 != null ? depth0.address : depth0)) != null ? helper : helperMissing),(typeof helper === functionType ? helper.call(depth0, {"name":"address","hash":{},"data":data}) : helper)))
+    + "</span>\n<span class=\"clear\"></span>\n</p>\n<p>\n<span class=\"more_label\">Last Seen</span>\n<span class=\"more_detail\"><span "
+    + escapeExpression(((helpers['bind-attr'] || (depth0 && depth0['bind-attr']) || helperMissing).call(depth0, {"name":"bind-attr","hash":{
+    'title': ((depth0 != null ? depth0.updated_at : depth0))
+  },"data":data})))
+    + ">10 minutes ago</span></span>\n<span class=\"clear\"></span>\n</p>\n<div class=\"clear\"></div>\n</div>\n</div>\n\n<div class=\"visitor_profile_messages\">\n";
+  stack1 = helpers.each.call(depth0, (depth0 != null ? depth0.messages : depth0), {"name":"each","hash":{},"fn":this.program(3, data),"inverse":this.noop,"data":data});
+  if (stack1 != null) { buffer += stack1; }
+  return buffer + "</div>\n\n<form class=\"visitor_new_message\">\n"
+    + escapeExpression(((helpers.textarea || (depth0 && depth0.textarea) || helperMissing).call(depth0, {"name":"textarea","hash":{
+    'value': ((depth0 != null ? depth0.body : depth0))
+  },"data":data})))
+    + "\n<button type=\"submit\">Send</button>\n</form>\n";
+},"useData":true});
+
+
+
+this["RDR"]["prototype"]["Templates"]["/application"] = Handlebars.template({"compiler":[6,">= 2.0.0-beta.1"],"main":function(depth0,helpers,partials,data) {
+  var stack1, helper, functionType="function", helperMissing=helpers.helperMissing, buffer = "<a href=\"#/admin\">Admin</a> | <a href=\"#/chatbox\">Chatbox</a><br><br>\n";
+  stack1 = ((helper = (helper = helpers.outlet || (depth0 != null ? depth0.outlet : depth0)) != null ? helper : helperMissing),(typeof helper === functionType ? helper.call(depth0, {"name":"outlet","hash":{},"data":data}) : helper));
+  if (stack1 != null) { buffer += stack1; }
+  return buffer + "\n";
+},"useData":true});
+
+
+
+this["RDR"]["prototype"]["Templates"]["/chatbox"] = Handlebars.template({"compiler":[6,">= 2.0.0-beta.1"],"main":function(depth0,helpers,partials,data) {
+  return "<div class=\"chatbox\">\n<div class=\"topbar\">\n<h1>Lively Chat Support</h1>\n<p class=\"close icon\">&times;</p>\n</div>\n\n<div class=\"header\">\n<div class=\"profile\">\n<img src=\"assets/imgs/avatar.jpg\">\n<p class=\"served_by_description\">\nYou're talking to\n<span class=\"agent_name\">Dallas</span>\n</p>\n</div>\n</div>\n\n<div class=\"messages\">\n<div class=\"overlay\"></div>\n</div>\n\n<form class=\"introducer form\">\n<p class=\"please_introduce\">\nTo start talking with <span class=\"agent_name\">Dallas</span>,<br>please introduce yourself.\n</p>\n\n<button type=\"submit\" class=\"fb_button\">\nIntroduce Myself through Facebook\n</button>\n\n<p class=\"or\">or</p>\n\n<div class=\"fields\"></div>\n\n<button type=\"submit\">\nIntroduce Myself\n</button>\n</form>\n\n<form class=\"new_message\">\n<textarea placeholder=\"What's on your mind?\"></textarea>\n<div class=\"action_row\">\n<button type=\"submit\">Send</button>\n<p class=\"upload_icon\"></p>\n<div class=\"clear\"></div>\n</div>\n</form>\n</div>\n\n<div class=\"prompter\">\n<div class=\"agent_avatar\">\n<p class=\"unread_messages_count\">3</p>\n<img src=\"assets/imgs/avatar.jpg\">\n</div>\n<p class=\"bubble\">\nI was wondering if you had any 3rd apples to display to the crew.\n</p>\n</div>\n";
+  },"useData":true});
+
+
+
+this["RDR"]["prototype"]["Templates"]["/index"] = Handlebars.template({"compiler":[6,">= 2.0.0-beta.1"],"main":function(depth0,helpers,partials,data) {
+  return "Index of Indexes.\n";
+  },"useData":true});
 this.Lively = new RDR;
 
 Lively.Config = {
@@ -7266,6 +7544,12 @@ Lively.Routes = {
     }
   }
 };
+
+Lively.Initializers.push(function() {
+  var url;
+  url = "lcs.min.css";
+  return $('body').append("<link rel=\"stylesheet\" type=\"text/css\" href=\"" + url + "\">");
+});
 
 Lively.Controllers["/admin"] = {
   vars: {},

@@ -36,6 +36,7 @@ module.exports = function(grunt) {
 					"tmp/<%= pkg.slug %>.js": [
 						"config/config.coffee",
 						"config/routes.coffee",
+						"config/initializers/*.coffee",
 						"app/controllers/**/*.coffee",
 						"config/boot.coffee"
 					]
@@ -95,7 +96,7 @@ module.exports = function(grunt) {
 		    tasks: ["js"]
 			},
 		  js: {
-		    files: ["app/controllers/**/*.coffee", "config/*"],
+		    files: ["config/**/*.coffee", "app/controllers/**/*.coffee"],
 		    tasks: ["js"]
 		  },
 		  vendor_css: {
@@ -121,10 +122,10 @@ module.exports = function(grunt) {
 	grunt.loadNpmTasks('grunt-contrib-concat');
 	grunt.loadNpmTasks('grunt-contrib-handlebars');
 	
-	grunt.registerTask("default", ["css", "handlebars", "js"]);
+	grunt.registerTask("default", ["css", "rdr", "js"]);
 	grunt.registerTask("css", ["sass", "cssmin"]);
 	grunt.registerTask("js", ["coffee", "concat"]);
 	grunt.registerTask("rdr", ["handlebars"]);
-	grunt.registerTask("build", ["css", "handlebars", "js", "uglify"]);
+	grunt.registerTask("build", ["css", "rdr", "js", "uglify"]);
 
 };

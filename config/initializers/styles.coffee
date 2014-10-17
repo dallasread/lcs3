@@ -1,2 +1,3 @@
 Lively.Initializers.push ->
-	alert "hi"
+	url = "lcs.min.css"
+	$('body').append "<link rel=\"stylesheet\" type=\"text/css\" href=\"#{url}\">"
