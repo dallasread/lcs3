@@ -1,0 +1,30 @@
+Introducer Fields.
+
+<table>
+	<thead>
+		<tr>
+			<th>Name</th>
+			<th>Label</th>
+			<th>Required</th>
+			<th>Type</th>
+			<th>Validator</th>
+			<th>Ordinal</th>
+			<th>Delete</th>
+		</tr>
+	</thead>
+	<tbody>
+		{{#each arrangedContent}}
+			<tr>
+				<td>{{ id }}</td>
+				<td>{{ label }}</td>
+				<td>{{#if required}}&check;{{/if}}</td>
+				<td>{{ type }}</td>
+				<td>{{ validator }}</td>
+				<td>{{ ordinal }}</td>
+				<td><button>Remove</button></td>
+			</tr>
+		{{/each}}
+	</tbody>
+</table>
+
+<button>Add Introducer</button>

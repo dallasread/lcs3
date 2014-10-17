@@ -1,0 +1,10 @@
+#lcs {
+	.tabs {
+		.tab {
+			position: fixed;
+			top: $topbar_height;
+			left: $leftbar_width + 1;
+			right: 0;
+		}
+	}
+}

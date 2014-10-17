@@ -1,0 +1,26 @@
+<div class="tab" data-tab="!/agents">
+
+	<table>
+		<thead>
+			<tr>
+				<th>Status</th>
+				<th>Name</th>
+				<th>Email</th>
+				<th></th>
+			</tr>
+		</thead>
+		<tbody>
+			{{#each arrangedContent}}
+				<tr>
+					<td>{{#if online}}&check;{{/if}}</td>
+					<td>{{ name }}</td>
+					<td>{{ email }}</td>
+					<td><button>Remove</button></td>
+				</tr>
+			{{/each}}
+		</tbody>
+	</table>
+
+	<button>Add Agent</button>
+
+</div>

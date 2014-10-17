@@ -1,0 +1,12 @@
+#lcs {
+	.admin_loading {
+		position: fixed;
+		background: #eee;
+		background: url(/assets/imgs/loading.gif) center no-repeat rgba(255, 255, 255, 0.75);
+		z-index: 99999999;
+		top: $topbar_height;
+		right: 0;
+		bottom: 0;
+		left: $leftbar_width + 1;
+	}
+}

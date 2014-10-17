@@ -1,0 +1,26 @@
+Triggers.
+
+<table>
+	<thead>
+		<tr>
+			<th>Delay</th>
+			<th>Exclude</th>
+			<th>Include</th>
+			<th>Message</th>
+			<th>Delete</th>
+		</tr>
+	</thead>
+	<tbody>
+		{{#each arrangedContent}}
+			<tr>
+				<td>{{ delay }}</td>
+				<td>{{ exclude }}</td>
+				<td>{{ include }}</td>
+				<td>{{ message.body }}</td>
+				<td><button>Remove</button></td>
+			</tr>
+		{{/each}}
+	</tbody>
+</table>
+
+<button>Add Trigger</button>

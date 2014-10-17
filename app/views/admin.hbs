@@ -1,0 +1,49 @@
+<div class="admin">
+	<div class="topbar">
+		<div class="menu_wrapper">
+			<!--<p class="fa fa-bars open_menu icon"></p>-->
+		</div>
+		<h1>{{ name }}</h1>
+		<p class="close icon">&times;</p>
+	</div>
+
+	<div class="leftbar">
+		<a href="#" class="toggle_status offline">
+			<i class="fa fa-toggle-on"></i>
+			<i class="fa fa-toggle-off"></i>
+			<span class="toggle-on">Online</span>
+			<span class="toggle-off">Offline</span>
+		</a>
+
+		<a href="#/admin/visitors">
+			<i class="fa fa-comments icon"></i>
+			Convos
+		</a>
+
+		<a href="#/admin/agents">
+			<i class="fa fa-group icon"></i>
+			Agents
+		</a>
+
+		<a href="#/admin/profile">
+			<i class="fa fa-user icon"></i>
+			My Profile
+		</a>
+
+		<a href="#/admin/settings">
+			<i class="fa fa-cog icon"></i>
+			Settings
+		</a>
+
+		<a href="#/admin/upgrade">
+			<!-- hide_if_upgraded hide_unless_admin -->
+			<i class="fa fa-bolt icon"></i>
+			Upgrade
+		</a>
+	</div>
+
+	<div class="tabs">
+		{{{outlet}}}
+	</div>
+
+</div>
