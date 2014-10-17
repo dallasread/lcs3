@@ -1,0 +1,38 @@
+#lcs {
+	.tabs {
+		.nav {
+			border-bottom: 1px solid #ccc;
+			padding-left: 20px;
+			padding-right: 20px;
+			text-align: center;
+			
+			a {
+				text-decoration: none;
+				border-top: 1px solid #ccc;
+				border-right: 1px solid #ccc;
+				border-left: 1px solid #ccc;
+				border-radius: 4px 4px 0 0;
+				padding: 13px 20px;
+				display: inline-block;
+				color: #777;
+				text-align: center;
+				width: 18.5%;
+				margin-right: 1%;
+				
+				&:last-child {
+					margin-right: 0;
+				}
+				
+				&.active {
+					background: #eee;
+					color: #333;
+					border-color: #ccc;
+				}
+			}
+		}
+		
+		.tab {
+			padding: 40px 20px;
+		}
+	}
+}
