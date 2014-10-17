@@ -1,7 +1,7 @@
 <div class="chatbox">
 	<div class="topbar">
 		<h1>Lively Chat Support</h1>
-		<p class="close icon">&times;</p>
+		<a href="#/" class="close icon">&times;</a>
 	</div>
 
 	<div class="header">	
@@ -23,13 +23,18 @@
 			To start talking with <span class="agent_name">Dallas</span>,<br>please introduce yourself.
 		</p>
 
-		<button type="submit" class="fb_button">
+		<button type="submit" class="fb_blue">
 			Introduce Myself through Facebook
 		</button>
 
 		<p class="or">or</p>
 
-		<div class="fields"></div>
+		<div class="fields">
+			<div class="field">
+				<label for="field_{{ name }}">{{ label }}</label>
+				<input type="{{ type }}{{#unless type}}text{{/unless}}" id="field_{{ name }}" name="{{ name }}" placeholder="{{ label }}" {{#if validator}}data-validator="{{ validator }}"{{/if}} {{#if required}}required{{/if}}>
+			</div>
+		</div>
 
 		<button type="submit">
 			Introduce Myself

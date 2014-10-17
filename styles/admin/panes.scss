@@ -1,15 +1,16 @@
 #lcs {
-	.tabs {
-		.tab {
+	.panes {
+		.pane {
 			position: fixed;
 			top: $topbar_height;
-			left: $leftbar_width + 1;
+			left: $leftbar_width;
 			right: 0;
 			bottom: 0;
 			background: #fff;
 			overflow-y: auto;
 			overflow-x: hidden;
 			-webkit-overflow-scrolling: touch;
+			padding: 30px;
 		}
 	}
 }

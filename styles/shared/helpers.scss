@@ -4,6 +4,11 @@
 		display: block;
 	}
 	
+	a {
+		text-decoration: none;
+		color: inherit;
+	}
+	
 	img {
 		max-width: 100%;
 	}
@@ -35,5 +40,22 @@
 	.with_padding {
 		padding: 50px;
 		text-align: center;
+	}
+	
+	.float_right {
+		float: right;
+	}
+	
+	.float_left {
+		float: left;
+	}
+	
+	.fluid_width {
+		width: auto;
+	}
+	
+	.full_width {
+		width: 100%;
+		display: block;
 	}
 }

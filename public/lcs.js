@@ -5348,27 +5348,27 @@ RDR = (function(_super) {
 
   _Class.prototype.Boot = function() {
     var index, init, r, _i, _len, _ref;
-    this.Info("===== App is initializing. =====");
+    this.Log("App", "Initializing");
     _ref = this.Initializers;
     for (index = _i = 0, _len = _ref.length; _i < _len; index = ++_i) {
       init = _ref[index];
-      this.Info("Boot: Initializer Executing: #" + index);
+      this.Warn("Booter", "Initializer Executing: #" + index);
       if (typeof init === "function") {
         init();
       }
     }
-    this.Info("Boot: App is Booting");
+    this.Debug("Booter", "Booting");
     this.createTemplates();
+    FastClick.attach(document.body);
     r = this;
     if (/\#|hash/.test(this.Config.history)) {
-      this.Info("Boot: RDR History is Now: #");
+      this.Log("Booter", "RDR History is Now: #");
       this.Config.history = "#";
       if (window.location.hash === "") {
         window.location.hash = "#/";
       }
       $(window).bind("hashchange", function() {
-        r.currentPath = window.location.hash.replace("#", "");
-        return r.fetchPath(r.currentPath);
+        return r.fetchPath(window.location.hash.replace("#", ""));
       });
       return $(window).trigger("hashchange");
     } else {
@@ -5393,30 +5393,33 @@ RDR = (function(_super) {
     return _Class.__super__.constructor.apply(this, arguments);
   }
 
-  _Class.prototype.Logger = function(type, a) {
+  _Class.prototype.Logger = function(log_level, a, b) {
+    var c, class_length;
     if (typeof this.Config !== "undefined" && this.Config.debug) {
-      return console[type](a);
+      class_length = 10;
+      c = new Array(class_length - a.length).join(" ");
+      return console[log_level]("" + c + a + " :: " + b);
     }
   };
 
-  _Class.prototype.Log = function(a) {
-    return this.Logger("log", a);
+  _Class.prototype.Log = function(a, b) {
+    return this.Logger("log", a, b);
   };
 
-  _Class.prototype.Info = function(a) {
-    return this.Logger("info", a);
+  _Class.prototype.Info = function(a, b) {
+    return this.Logger("info", a, b);
   };
 
-  _Class.prototype.Debug = function(a) {
-    return this.Logger("debug", a);
+  _Class.prototype.Debug = function(a, b) {
+    return this.Logger("debug", a, b);
   };
 
-  _Class.prototype.Warn = function(a) {
-    return this.Logger("warn", a);
+  _Class.prototype.Warn = function(a, b) {
+    return this.Logger("warn", a, b);
   };
 
-  _Class.prototype.Error = function(a) {
-    return this.Logger("error", a);
+  _Class.prototype.Error = function(a, b) {
+    return this.Logger("error", a, b);
   };
 
   return _Class;
@@ -5445,7 +5448,6 @@ RDR = (function(_super) {
     if (callback == null) {
       callback = false;
     }
-    views.push("index");
     views_path = views.join("/");
     view_paths = [];
     views = views.reverse();
@@ -5459,9 +5461,9 @@ RDR = (function(_super) {
       view_path = "/" + (path.join("/"));
       dasherized_path = path.join("-");
       view_paths.push(view_path);
-      this.Info("Router: Fetching View: " + view_path);
+      this.Log("Views", "Fetching: " + view_path);
       if ($(".rdr-template-" + dasherized_path).length) {
-        this.Debug("Router: View Already Present: " + view_path);
+        this.Warn("Views", "Already Present: " + view_path);
         if (!placer.length) {
           placer = $(".rdr-template-" + dasherized_path + "-outlet");
         }
@@ -5470,9 +5472,9 @@ RDR = (function(_super) {
           html = this.buildFromTemplate(this.Templates[view_path], {
             outlet: html
           }, dasherized_path);
-          this.Info("Router: View Generated: " + view_path);
+          this.Log("Views", "Generated: " + view_path);
         } else {
-          this.Warn("Router: View Not Found: " + view_path);
+          this.Warn("Views", "Not Found: " + view_path);
         }
       }
     }
@@ -5480,18 +5482,24 @@ RDR = (function(_super) {
       placer = $(this.Config.container).find(".rdr-template-application-outlet");
     }
     placer.html(html);
-    this.Info("Router: View Resolved: /" + views_path);
+    this.Log("Views", "Resolved: /" + views_path);
     if (typeof callback === "function") {
       return callback(this.Config.container, view_paths);
     }
   };
 
   _Class.prototype.fetchPath = function(path) {
-    var segments;
-    this.Info("Router: Fetching Route: " + path);
+    var new_path, segments;
+    this.Debug("Router", "Fetching: " + path);
     segments = this.findRoute(path);
-    this.Info("Router: Found Route: /" + (segments.join("/")));
-    return this.findViews(segments, this.markActiveRoutes);
+    new_path = "/" + (segments.join("/"));
+    if (new_path === this.currentPath) {
+      return this.Debug("Router", "Already Active: " + path);
+    } else {
+      this.currentPath = new_path;
+      this.Debug("Router", "Found: " + new_path);
+      return this.findViews(segments, this.markActiveRoutes);
+    }
   };
 
   _Class.prototype.markActiveRoutes = function(c, view_paths) {
@@ -5540,12 +5548,821 @@ RDR = (function(_super) {
         }
       }
     }
+    if (selected_path[selected_path.length - 1] !== "index") {
+      selected_path.push("index");
+    }
     return selected_path;
   };
 
   return _Class;
 
 })(RDR);
+
+(function () {
+	'use strict';
+	
+	/**
+	 * @preserve FastClick: polyfill to remove click delays on browsers with touch UIs.
+	 *
+	 * @version 1.0.3
+	 * @codingstandard ftlabs-jsv2
+	 * @copyright The Financial Times Limited [All Rights Reserved]
+	 * @license MIT License (see LICENSE.txt)
+	 */
+	
+	/*jslint browser:true, node:true*/
+	/*global define, Event, Node*/
+	
+	
+	/**
+	 * Instantiate fast-clicking listeners on the specified layer.
+	 *
+	 * @constructor
+	 * @param {Element} layer The layer to listen on
+	 * @param {Object} options The options to override the defaults
+	 */
+	function FastClick(layer, options) {
+		var oldOnClick;
+	
+		options = options || {};
+	
+		/**
+		 * Whether a click is currently being tracked.
+		 *
+		 * @type boolean
+		 */
+		this.trackingClick = false;
+	
+	
+		/**
+		 * Timestamp for when click tracking started.
+		 *
+		 * @type number
+		 */
+		this.trackingClickStart = 0;
+	
+	
+		/**
+		 * The element being tracked for a click.
+		 *
+		 * @type EventTarget
+		 */
+		this.targetElement = null;
+	
+	
+		/**
+		 * X-coordinate of touch start event.
+		 *
+		 * @type number
+		 */
+		this.touchStartX = 0;
+	
+	
+		/**
+		 * Y-coordinate of touch start event.
+		 *
+		 * @type number
+		 */
+		this.touchStartY = 0;
+	
+	
+		/**
+		 * ID of the last touch, retrieved from Touch.identifier.
+		 *
+		 * @type number
+		 */
+		this.lastTouchIdentifier = 0;
+	
+	
+		/**
+		 * Touchmove boundary, beyond which a click will be cancelled.
+		 *
+		 * @type number
+		 */
+		this.touchBoundary = options.touchBoundary || 10;
+	
+	
+		/**
+		 * The FastClick layer.
+		 *
+		 * @type Element
+		 */
+		this.layer = layer;
+	
+		/**
+		 * The minimum time between tap(touchstart and touchend) events
+		 *
+		 * @type number
+		 */
+		this.tapDelay = options.tapDelay || 200;
+	
+		if (FastClick.notNeeded(layer)) {
+			return;
+		}
+	
+		// Some old versions of Android don't have Function.prototype.bind
+		function bind(method, context) {
+			return function() { return method.apply(context, arguments); };
+		}
+	
+	
+		var methods = ['onMouse', 'onClick', 'onTouchStart', 'onTouchMove', 'onTouchEnd', 'onTouchCancel'];
+		var context = this;
+		for (var i = 0, l = methods.length; i < l; i++) {
+			context[methods[i]] = bind(context[methods[i]], context);
+		}
+	
+		// Set up event handlers as required
+		if (deviceIsAndroid) {
+			layer.addEventListener('mouseover', this.onMouse, true);
+			layer.addEventListener('mousedown', this.onMouse, true);
+			layer.addEventListener('mouseup', this.onMouse, true);
+		}
+	
+		layer.addEventListener('click', this.onClick, true);
+		layer.addEventListener('touchstart', this.onTouchStart, false);
+		layer.addEventListener('touchmove', this.onTouchMove, false);
+		layer.addEventListener('touchend', this.onTouchEnd, false);
+		layer.addEventListener('touchcancel', this.onTouchCancel, false);
+	
+		// Hack is required for browsers that don't support Event#stopImmediatePropagation (e.g. Android 2)
+		// which is how FastClick normally stops click events bubbling to callbacks registered on the FastClick
+		// layer when they are cancelled.
+		if (!Event.prototype.stopImmediatePropagation) {
+			layer.removeEventListener = function(type, callback, capture) {
+				var rmv = Node.prototype.removeEventListener;
+				if (type === 'click') {
+					rmv.call(layer, type, callback.hijacked || callback, capture);
+				} else {
+					rmv.call(layer, type, callback, capture);
+				}
+			};
+	
+			layer.addEventListener = function(type, callback, capture) {
+				var adv = Node.prototype.addEventListener;
+				if (type === 'click') {
+					adv.call(layer, type, callback.hijacked || (callback.hijacked = function(event) {
+						if (!event.propagationStopped) {
+							callback(event);
+						}
+					}), capture);
+				} else {
+					adv.call(layer, type, callback, capture);
+				}
+			};
+		}
+	
+		// If a handler is already declared in the element's onclick attribute, it will be fired before
+		// FastClick's onClick handler. Fix this by pulling out the user-defined handler function and
+		// adding it as listener.
+		if (typeof layer.onclick === 'function') {
+	
+			// Android browser on at least 3.2 requires a new reference to the function in layer.onclick
+			// - the old one won't work if passed to addEventListener directly.
+			oldOnClick = layer.onclick;
+			layer.addEventListener('click', function(event) {
+				oldOnClick(event);
+			}, false);
+			layer.onclick = null;
+		}
+	}
+	
+	
+	/**
+	 * Android requires exceptions.
+	 *
+	 * @type boolean
+	 */
+	var deviceIsAndroid = navigator.userAgent.indexOf('Android') > 0;
+	
+	
+	/**
+	 * iOS requires exceptions.
+	 *
+	 * @type boolean
+	 */
+	var deviceIsIOS = /iP(ad|hone|od)/.test(navigator.userAgent);
+	
+	
+	/**
+	 * iOS 4 requires an exception for select elements.
+	 *
+	 * @type boolean
+	 */
+	var deviceIsIOS4 = deviceIsIOS && (/OS 4_\d(_\d)?/).test(navigator.userAgent);
+	
+	
+	/**
+	 * iOS 6.0(+?) requires the target element to be manually derived
+	 *
+	 * @type boolean
+	 */
+	var deviceIsIOSWithBadTarget = deviceIsIOS && (/OS ([6-9]|\d{2})_\d/).test(navigator.userAgent);
+	
+	/**
+	 * BlackBerry requires exceptions.
+	 *
+	 * @type boolean
+	 */
+	var deviceIsBlackBerry10 = navigator.userAgent.indexOf('BB10') > 0;
+	
+	/**
+	 * Determine whether a given element requires a native click.
+	 *
+	 * @param {EventTarget|Element} target Target DOM element
+	 * @returns {boolean} Returns true if the element needs a native click
+	 */
+	FastClick.prototype.needsClick = function(target) {
+		switch (target.nodeName.toLowerCase()) {
+	
+		// Don't send a synthetic click to disabled inputs (issue #62)
+		case 'button':
+		case 'select':
+		case 'textarea':
+			if (target.disabled) {
+				return true;
+			}
+	
+			break;
+		case 'input':
+	
+			// File inputs need real clicks on iOS 6 due to a browser bug (issue #68)
+			if ((deviceIsIOS && target.type === 'file') || target.disabled) {
+				return true;
+			}
+	
+			break;
+		case 'label':
+		case 'video':
+			return true;
+		}
+	
+		return (/\bneedsclick\b/).test(target.className);
+	};
+	
+	
+	/**
+	 * Determine whether a given element requires a call to focus to simulate click into element.
+	 *
+	 * @param {EventTarget|Element} target Target DOM element
+	 * @returns {boolean} Returns true if the element requires a call to focus to simulate native click.
+	 */
+	FastClick.prototype.needsFocus = function(target) {
+		switch (target.nodeName.toLowerCase()) {
+		case 'textarea':
+			return true;
+		case 'select':
+			return !deviceIsAndroid;
+		case 'input':
+			switch (target.type) {
+			case 'button':
+			case 'checkbox':
+			case 'file':
+			case 'image':
+			case 'radio':
+			case 'submit':
+				return false;
+			}
+	
+			// No point in attempting to focus disabled inputs
+			return !target.disabled && !target.readOnly;
+		default:
+			return (/\bneedsfocus\b/).test(target.className);
+		}
+	};
+	
+	
+	/**
+	 * Send a click event to the specified element.
+	 *
+	 * @param {EventTarget|Element} targetElement
+	 * @param {Event} event
+	 */
+	FastClick.prototype.sendClick = function(targetElement, event) {
+		var clickEvent, touch;
+	
+		// On some Android devices activeElement needs to be blurred otherwise the synthetic click will have no effect (#24)
+		if (document.activeElement && document.activeElement !== targetElement) {
+			document.activeElement.blur();
+		}
+	
+		touch = event.changedTouches[0];
+	
+		// Synthesise a click event, with an extra attribute so it can be tracked
+		clickEvent = document.createEvent('MouseEvents');
+		clickEvent.initMouseEvent(this.determineEventType(targetElement), true, true, window, 1, touch.screenX, touch.screenY, touch.clientX, touch.clientY, false, false, false, false, 0, null);
+		clickEvent.forwardedTouchEvent = true;
+		targetElement.dispatchEvent(clickEvent);
+	};
+	
+	FastClick.prototype.determineEventType = function(targetElement) {
+	
+		//Issue #159: Android Chrome Select Box does not open with a synthetic click event
+		if (deviceIsAndroid && targetElement.tagName.toLowerCase() === 'select') {
+			return 'mousedown';
+		}
+	
+		return 'click';
+	};
+	
+	
+	/**
+	 * @param {EventTarget|Element} targetElement
+	 */
+	FastClick.prototype.focus = function(targetElement) {
+		var length;
+	
+		// Issue #160: on iOS 7, some input elements (e.g. date datetime month) throw a vague TypeError on setSelectionRange. These elements don't have an integer value for the selectionStart and selectionEnd properties, but unfortunately that can't be used for detection because accessing the properties also throws a TypeError. Just check the type instead. Filed as Apple bug #15122724.
+		if (deviceIsIOS && targetElement.setSelectionRange && targetElement.type.indexOf('date') !== 0 && targetElement.type !== 'time' && targetElement.type !== 'month') {
+			length = targetElement.value.length;
+			targetElement.setSelectionRange(length, length);
+		} else {
+			targetElement.focus();
+		}
+	};
+	
+	
+	/**
+	 * Check whether the given target element is a child of a scrollable layer and if so, set a flag on it.
+	 *
+	 * @param {EventTarget|Element} targetElement
+	 */
+	FastClick.prototype.updateScrollParent = function(targetElement) {
+		var scrollParent, parentElement;
+	
+		scrollParent = targetElement.fastClickScrollParent;
+	
+		// Attempt to discover whether the target element is contained within a scrollable layer. Re-check if the
+		// target element was moved to another parent.
+		if (!scrollParent || !scrollParent.contains(targetElement)) {
+			parentElement = targetElement;
+			do {
+				if (parentElement.scrollHeight > parentElement.offsetHeight) {
+					scrollParent = parentElement;
+					targetElement.fastClickScrollParent = parentElement;
+					break;
+				}
+	
+				parentElement = parentElement.parentElement;
+			} while (parentElement);
+		}
+	
+		// Always update the scroll top tracker if possible.
+		if (scrollParent) {
+			scrollParent.fastClickLastScrollTop = scrollParent.scrollTop;
+		}
+	};
+	
+	
+	/**
+	 * @param {EventTarget} targetElement
+	 * @returns {Element|EventTarget}
+	 */
+	FastClick.prototype.getTargetElementFromEventTarget = function(eventTarget) {
+	
+		// On some older browsers (notably Safari on iOS 4.1 - see issue #56) the event target may be a text node.
+		if (eventTarget.nodeType === Node.TEXT_NODE) {
+			return eventTarget.parentNode;
+		}
+	
+		return eventTarget;
+	};
+	
+	
+	/**
+	 * On touch start, record the position and scroll offset.
+	 *
+	 * @param {Event} event
+	 * @returns {boolean}
+	 */
+	FastClick.prototype.onTouchStart = function(event) {
+		var targetElement, touch, selection;
+	
+		// Ignore multiple touches, otherwise pinch-to-zoom is prevented if both fingers are on the FastClick element (issue #111).
+		if (event.targetTouches.length > 1) {
+			return true;
+		}
+	
+		targetElement = this.getTargetElementFromEventTarget(event.target);
+		touch = event.targetTouches[0];
+	
+		if (deviceIsIOS) {
+	
+			// Only trusted events will deselect text on iOS (issue #49)
+			selection = window.getSelection();
+			if (selection.rangeCount && !selection.isCollapsed) {
+				return true;
+			}
+	
+			if (!deviceIsIOS4) {
+	
+				// Weird things happen on iOS when an alert or confirm dialog is opened from a click event callback (issue #23):
+				// when the user next taps anywhere else on the page, new touchstart and touchend events are dispatched
+				// with the same identifier as the touch event that previously triggered the click that triggered the alert.
+				// Sadly, there is an issue on iOS 4 that causes some normal touch events to have the same identifier as an
+				// immediately preceeding touch event (issue #52), so this fix is unavailable on that platform.
+				// Issue 120: touch.identifier is 0 when Chrome dev tools 'Emulate touch events' is set with an iOS device UA string,
+				// which causes all touch events to be ignored. As this block only applies to iOS, and iOS identifiers are always long,
+				// random integers, it's safe to to continue if the identifier is 0 here.
+				if (touch.identifier && touch.identifier === this.lastTouchIdentifier) {
+					event.preventDefault();
+					return false;
+				}
+	
+				this.lastTouchIdentifier = touch.identifier;
+	
+				// If the target element is a child of a scrollable layer (using -webkit-overflow-scrolling: touch) and:
+				// 1) the user does a fling scroll on the scrollable layer
+				// 2) the user stops the fling scroll with another tap
+				// then the event.target of the last 'touchend' event will be the element that was under the user's finger
+				// when the fling scroll was started, causing FastClick to send a click event to that layer - unless a check
+				// is made to ensure that a parent layer was not scrolled before sending a synthetic click (issue #42).
+				this.updateScrollParent(targetElement);
+			}
+		}
+	
+		this.trackingClick = true;
+		this.trackingClickStart = event.timeStamp;
+		this.targetElement = targetElement;
+	
+		this.touchStartX = touch.pageX;
+		this.touchStartY = touch.pageY;
+	
+		// Prevent phantom clicks on fast double-tap (issue #36)
+		if ((event.timeStamp - this.lastClickTime) < this.tapDelay) {
+			event.preventDefault();
+		}
+	
+		return true;
+	};
+	
+	
+	/**
+	 * Based on a touchmove event object, check whether the touch has moved past a boundary since it started.
+	 *
+	 * @param {Event} event
+	 * @returns {boolean}
+	 */
+	FastClick.prototype.touchHasMoved = function(event) {
+		var touch = event.changedTouches[0], boundary = this.touchBoundary;
+	
+		if (Math.abs(touch.pageX - this.touchStartX) > boundary || Math.abs(touch.pageY - this.touchStartY) > boundary) {
+			return true;
+		}
+	
+		return false;
+	};
+	
+	
+	/**
+	 * Update the last position.
+	 *
+	 * @param {Event} event
+	 * @returns {boolean}
+	 */
+	FastClick.prototype.onTouchMove = function(event) {
+		if (!this.trackingClick) {
+			return true;
+		}
+	
+		// If the touch has moved, cancel the click tracking
+		if (this.targetElement !== this.getTargetElementFromEventTarget(event.target) || this.touchHasMoved(event)) {
+			this.trackingClick = false;
+			this.targetElement = null;
+		}
+	
+		return true;
+	};
+	
+	
+	/**
+	 * Attempt to find the labelled control for the given label element.
+	 *
+	 * @param {EventTarget|HTMLLabelElement} labelElement
+	 * @returns {Element|null}
+	 */
+	FastClick.prototype.findControl = function(labelElement) {
+	
+		// Fast path for newer browsers supporting the HTML5 control attribute
+		if (labelElement.control !== undefined) {
+			return labelElement.control;
+		}
+	
+		// All browsers under test that support touch events also support the HTML5 htmlFor attribute
+		if (labelElement.htmlFor) {
+			return document.getElementById(labelElement.htmlFor);
+		}
+	
+		// If no for attribute exists, attempt to retrieve the first labellable descendant element
+		// the list of which is defined here: http://www.w3.org/TR/html5/forms.html#category-label
+		return labelElement.querySelector('button, input:not([type=hidden]), keygen, meter, output, progress, select, textarea');
+	};
+	
+	
+	/**
+	 * On touch end, determine whether to send a click event at once.
+	 *
+	 * @param {Event} event
+	 * @returns {boolean}
+	 */
+	FastClick.prototype.onTouchEnd = function(event) {
+		var forElement, trackingClickStart, targetTagName, scrollParent, touch, targetElement = this.targetElement;
+	
+		if (!this.trackingClick) {
+			return true;
+		}
+	
+		// Prevent phantom clicks on fast double-tap (issue #36)
+		if ((event.timeStamp - this.lastClickTime) < this.tapDelay) {
+			this.cancelNextClick = true;
+			return true;
+		}
+	
+		// Reset to prevent wrong click cancel on input (issue #156).
+		this.cancelNextClick = false;
+	
+		this.lastClickTime = event.timeStamp;
+	
+		trackingClickStart = this.trackingClickStart;
+		this.trackingClick = false;
+		this.trackingClickStart = 0;
+	
+		// On some iOS devices, the targetElement supplied with the event is invalid if the layer
+		// is performing a transition or scroll, and has to be re-detected manually. Note that
+		// for this to function correctly, it must be called *after* the event target is checked!
+		// See issue #57; also filed as rdar://13048589 .
+		if (deviceIsIOSWithBadTarget) {
+			touch = event.changedTouches[0];
+	
+			// In certain cases arguments of elementFromPoint can be negative, so prevent setting targetElement to null
+			targetElement = document.elementFromPoint(touch.pageX - window.pageXOffset, touch.pageY - window.pageYOffset) || targetElement;
+			targetElement.fastClickScrollParent = this.targetElement.fastClickScrollParent;
+		}
+	
+		targetTagName = targetElement.tagName.toLowerCase();
+		if (targetTagName === 'label') {
+			forElement = this.findControl(targetElement);
+			if (forElement) {
+				this.focus(targetElement);
+				if (deviceIsAndroid) {
+					return false;
+				}
+	
+				targetElement = forElement;
+			}
+		} else if (this.needsFocus(targetElement)) {
+	
+			// Case 1: If the touch started a while ago (best guess is 100ms based on tests for issue #36) then focus will be triggered anyway. Return early and unset the target element reference so that the subsequent click will be allowed through.
+			// Case 2: Without this exception for input elements tapped when the document is contained in an iframe, then any inputted text won't be visible even though the value attribute is updated as the user types (issue #37).
+			if ((event.timeStamp - trackingClickStart) > 100 || (deviceIsIOS && window.top !== window && targetTagName === 'input')) {
+				this.targetElement = null;
+				return false;
+			}
+	
+			this.focus(targetElement);
+			this.sendClick(targetElement, event);
+	
+			// Select elements need the event to go through on iOS 4, otherwise the selector menu won't open.
+			// Also this breaks opening selects when VoiceOver is active on iOS6, iOS7 (and possibly others)
+			if (!deviceIsIOS || targetTagName !== 'select') {
+				this.targetElement = null;
+				event.preventDefault();
+			}
+	
+			return false;
+		}
+	
+		if (deviceIsIOS && !deviceIsIOS4) {
+	
+			// Don't send a synthetic click event if the target element is contained within a parent layer that was scrolled
+			// and this tap is being used to stop the scrolling (usually initiated by a fling - issue #42).
+			scrollParent = targetElement.fastClickScrollParent;
+			if (scrollParent && scrollParent.fastClickLastScrollTop !== scrollParent.scrollTop) {
+				return true;
+			}
+		}
+	
+		// Prevent the actual click from going though - unless the target node is marked as requiring
+		// real clicks or if it is in the whitelist in which case only non-programmatic clicks are permitted.
+		if (!this.needsClick(targetElement)) {
+			event.preventDefault();
+			this.sendClick(targetElement, event);
+		}
+	
+		return false;
+	};
+	
+	
+	/**
+	 * On touch cancel, stop tracking the click.
+	 *
+	 * @returns {void}
+	 */
+	FastClick.prototype.onTouchCancel = function() {
+		this.trackingClick = false;
+		this.targetElement = null;
+	};
+	
+	
+	/**
+	 * Determine mouse events which should be permitted.
+	 *
+	 * @param {Event} event
+	 * @returns {boolean}
+	 */
+	FastClick.prototype.onMouse = function(event) {
+	
+		// If a target element was never set (because a touch event was never fired) allow the event
+		if (!this.targetElement) {
+			return true;
+		}
+	
+		if (event.forwardedTouchEvent) {
+			return true;
+		}
+	
+		// Programmatically generated events targeting a specific element should be permitted
+		if (!event.cancelable) {
+			return true;
+		}
+	
+		// Derive and check the target element to see whether the mouse event needs to be permitted;
+		// unless explicitly enabled, prevent non-touch click events from triggering actions,
+		// to prevent ghost/doubleclicks.
+		if (!this.needsClick(this.targetElement) || this.cancelNextClick) {
+	
+			// Prevent any user-added listeners declared on FastClick element from being fired.
+			if (event.stopImmediatePropagation) {
+				event.stopImmediatePropagation();
+			} else {
+	
+				// Part of the hack for browsers that don't support Event#stopImmediatePropagation (e.g. Android 2)
+				event.propagationStopped = true;
+			}
+	
+			// Cancel the event
+			event.stopPropagation();
+			event.preventDefault();
+	
+			return false;
+		}
+	
+		// If the mouse event is permitted, return true for the action to go through.
+		return true;
+	};
+	
+	
+	/**
+	 * On actual clicks, determine whether this is a touch-generated click, a click action occurring
+	 * naturally after a delay after a touch (which needs to be cancelled to avoid duplication), or
+	 * an actual click which should be permitted.
+	 *
+	 * @param {Event} event
+	 * @returns {boolean}
+	 */
+	FastClick.prototype.onClick = function(event) {
+		var permitted;
+	
+		// It's possible for another FastClick-like library delivered with third-party code to fire a click event before FastClick does (issue #44). In that case, set the click-tracking flag back to false and return early. This will cause onTouchEnd to return early.
+		if (this.trackingClick) {
+			this.targetElement = null;
+			this.trackingClick = false;
+			return true;
+		}
+	
+		// Very odd behaviour on iOS (issue #18): if a submit element is present inside a form and the user hits enter in the iOS simulator or clicks the Go button on the pop-up OS keyboard the a kind of 'fake' click event will be triggered with the submit-type input element as the target.
+		if (event.target.type === 'submit' && event.detail === 0) {
+			return true;
+		}
+	
+		permitted = this.onMouse(event);
+	
+		// Only unset targetElement if the click is not permitted. This will ensure that the check for !targetElement in onMouse fails and the browser's click doesn't go through.
+		if (!permitted) {
+			this.targetElement = null;
+		}
+	
+		// If clicks are permitted, return true for the action to go through.
+		return permitted;
+	};
+	
+	
+	/**
+	 * Remove all FastClick's event listeners.
+	 *
+	 * @returns {void}
+	 */
+	FastClick.prototype.destroy = function() {
+		var layer = this.layer;
+	
+		if (deviceIsAndroid) {
+			layer.removeEventListener('mouseover', this.onMouse, true);
+			layer.removeEventListener('mousedown', this.onMouse, true);
+			layer.removeEventListener('mouseup', this.onMouse, true);
+		}
+	
+		layer.removeEventListener('click', this.onClick, true);
+		layer.removeEventListener('touchstart', this.onTouchStart, false);
+		layer.removeEventListener('touchmove', this.onTouchMove, false);
+		layer.removeEventListener('touchend', this.onTouchEnd, false);
+		layer.removeEventListener('touchcancel', this.onTouchCancel, false);
+	};
+	
+	
+	/**
+	 * Check whether FastClick is needed.
+	 *
+	 * @param {Element} layer The layer to listen on
+	 */
+	FastClick.notNeeded = function(layer) {
+		var metaViewport;
+		var chromeVersion;
+		var blackberryVersion;
+	
+		// Devices that don't support touch don't need FastClick
+		if (typeof window.ontouchstart === 'undefined') {
+			return true;
+		}
+	
+		// Chrome version - zero for other browsers
+		chromeVersion = +(/Chrome\/([0-9]+)/.exec(navigator.userAgent) || [,0])[1];
+	
+		if (chromeVersion) {
+	
+			if (deviceIsAndroid) {
+				metaViewport = document.querySelector('meta[name=viewport]');
+	
+				if (metaViewport) {
+					// Chrome on Android with user-scalable="no" doesn't need FastClick (issue #89)
+					if (metaViewport.content.indexOf('user-scalable=no') !== -1) {
+						return true;
+					}
+					// Chrome 32 and above with width=device-width or less don't need FastClick
+					if (chromeVersion > 31 && document.documentElement.scrollWidth <= window.outerWidth) {
+						return true;
+					}
+				}
+	
+			// Chrome desktop doesn't need FastClick (issue #15)
+			} else {
+				return true;
+			}
+		}
+	
+		if (deviceIsBlackBerry10) {
+			blackberryVersion = navigator.userAgent.match(/Version\/([0-9]*)\.([0-9]*)/);
+	
+			// BlackBerry 10.3+ does not require Fastclick library.
+			// https://github.com/ftlabs/fastclick/issues/251
+			if (blackberryVersion[1] >= 10 && blackberryVersion[2] >= 3) {
+				metaViewport = document.querySelector('meta[name=viewport]');
+	
+				if (metaViewport) {
+					// user-scalable=no eliminates click delay.
+					if (metaViewport.content.indexOf('user-scalable=no') !== -1) {
+						return true;
+					}
+					// width=device-width (or less than device-width) eliminates click delay.
+					if (document.documentElement.scrollWidth <= window.outerWidth) {
+						return true;
+					}
+				}
+			}
+		}
+	
+		// IE10 with -ms-touch-action: none, which disables double-tap-to-zoom (issue #97)
+		if (layer.style.msTouchAction === 'none') {
+			return true;
+		}
+	
+		return false;
+	};
+	
+	
+	/**
+	 * Factory method for creating a FastClick object
+	 *
+	 * @param {Element} layer The layer to listen on
+	 * @param {Object} options The options to override the defaults
+	 */
+	FastClick.attach = function(layer, options) {
+		return new FastClick(layer, options);
+	};
+	
+	
+	if (typeof define == 'function' && typeof define.amd == 'object' && define.amd) {
+	
+		// AMD. Register as an anonymous module.
+		define(function() {
+			return FastClick;
+		});
+	} else if (typeof module !== 'undefined' && module.exports) {
+		module.exports = FastClick.attach;
+		module.exports.FastClick = FastClick;
+	} else {
+		window.FastClick = FastClick;
+	}
+}());
 
 /*!
  *  howler.js v1.1.25
@@ -7256,9 +8073,7 @@ this["RDR"]["prototype"] = this["RDR"]["prototype"] || {};
 this["RDR"]["prototype"]["Templates"] = this["RDR"]["prototype"]["Templates"] || {};
 
 this["RDR"]["prototype"]["Templates"]["/admin"] = Handlebars.template({"compiler":[6,">= 2.0.0-beta.1"],"main":function(depth0,helpers,partials,data) {
-  var stack1, helper, functionType="function", helperMissing=helpers.helperMissing, escapeExpression=this.escapeExpression, buffer = "<div class=\"admin\">\n<div class=\"topbar\">\n<div class=\"menu_wrapper\">\n<!--<p class=\"fa fa-bars open_menu icon\"></p>-->\n</div>\n<h1>"
-    + escapeExpression(((helper = (helper = helpers.name || (depth0 != null ? depth0.name : depth0)) != null ? helper : helperMissing),(typeof helper === functionType ? helper.call(depth0, {"name":"name","hash":{},"data":data}) : helper)))
-    + "</h1>\n<p class=\"close icon\">&times;</p>\n</div>\n\n<div class=\"leftbar\">\n<a href=\"#\" class=\"toggle_status offline\">\n<i class=\"fa fa-toggle-on\"></i>\n<i class=\"fa fa-toggle-off\"></i>\n<span class=\"toggle-on\">Online</span>\n<span class=\"toggle-off\">Offline</span>\n</a>\n\n<a href=\"#/admin/visitors\">\n<i class=\"fa fa-comments icon\"></i>\nConvos\n</a>\n\n<a href=\"#/admin/agents\">\n<i class=\"fa fa-group icon\"></i>\nAgents\n</a>\n\n<a href=\"#/admin/profile\">\n<i class=\"fa fa-user icon\"></i>\nMy Profile\n</a>\n\n<a href=\"#/admin/settings\">\n<i class=\"fa fa-cog icon\"></i>\nSettings\n</a>\n\n<a href=\"#/admin/upgrade\">\n<!-- hide_if_upgraded hide_unless_admin -->\n<i class=\"fa fa-bolt icon\"></i>\nUpgrade\n</a>\n</div>\n\n<div class=\"tabs\">\n";
+  var stack1, helper, functionType="function", helperMissing=helpers.helperMissing, buffer = "<div class=\"admin\">\n<div class=\"topbar\">\n<div class=\"menu_wrapper\">\n<!--<p class=\"fa fa-bars open_menu icon\"></p>-->\n</div>\n<h1>Lively Chat Support Inc.</h1>\n<a href=\"#/\" class=\"close icon\">&times;</a>\n</div>\n\n<div class=\"leftbar\">\n<a href=\"#\" class=\"toggle_status offline\">\n<i class=\"fa fa-toggle-on\"></i>\n<i class=\"fa fa-toggle-off\"></i>\n<span class=\"toggle-on\">Online</span>\n<span class=\"toggle-off\">Offline</span>\n</a>\n\n<a href=\"#/admin/visitors\">\n<i class=\"fa fa-comments icon\"></i>\nConvos\n</a>\n\n<a href=\"#/admin/agents\">\n<i class=\"fa fa-group icon\"></i>\nAgents\n</a>\n\n<a href=\"#/admin/settings\">\n<i class=\"fa fa-cog icon\"></i>\nSettings\n</a>\n\n<a href=\"#/admin/upgrade\">\n<!-- hide_if_upgraded hide_unless_admin -->\n<i class=\"fa fa-bolt icon\"></i>\nUpgrade\n</a>\n</div>\n\n<div class=\"panes\">\n";
   stack1 = ((helper = (helper = helpers.outlet || (depth0 != null ? depth0.outlet : depth0)) != null ? helper : helperMissing),(typeof helper === functionType ? helper.call(depth0, {"name":"outlet","hash":{},"data":data}) : helper));
   if (stack1 != null) { buffer += stack1; }
   return buffer + "\n</div>\n\n</div>\n";
@@ -7278,16 +8093,16 @@ this["RDR"]["prototype"]["Templates"]["/admin/agents"] = Handlebars.template({"1
 },"2":function(depth0,helpers,partials,data) {
   return "&check;";
   },"compiler":[6,">= 2.0.0-beta.1"],"main":function(depth0,helpers,partials,data) {
-  var stack1, buffer = "<div class=\"tab\">\n\n<table>\n<thead>\n<tr>\n<th>Status</th>\n<th>Name</th>\n<th>Email</th>\n<th></th>\n</tr>\n</thead>\n<tbody>\n";
+  var stack1, buffer = "<div class=\"pane\">\n\n<table>\n<thead>\n<tr>\n<th>Status</th>\n<th>Name</th>\n<th>Email</th>\n<th></th>\n</tr>\n</thead>\n<tbody>\n";
   stack1 = helpers.each.call(depth0, (depth0 != null ? depth0.arrangedContent : depth0), {"name":"each","hash":{},"fn":this.program(1, data),"inverse":this.noop,"data":data});
   if (stack1 != null) { buffer += stack1; }
-  return buffer + "</tbody>\n</table>\n\n<button>Add Agent</button>\n\n</div>\n";
+  return buffer + "</tbody>\n</table>\n\n<button class=\"fluid_width\">Add Agent</button>\n\n</div>\n";
 },"useData":true});
 
 
 
 this["RDR"]["prototype"]["Templates"]["/admin/index"] = Handlebars.template({"compiler":[6,">= 2.0.0-beta.1"],"main":function(depth0,helpers,partials,data) {
-  return "<div class=\"tab\">\nThis is main admin tab.\n</div>\n";
+  return "<div class=\"pane\">\nThis is main admin tab.\n</div>\n";
   },"useData":true});
 
 
@@ -7298,17 +8113,11 @@ this["RDR"]["prototype"]["Templates"]["/admin/loading"] = Handlebars.template({"
 
 
 
-this["RDR"]["prototype"]["Templates"]["/admin/profile"] = Handlebars.template({"compiler":[6,">= 2.0.0-beta.1"],"main":function(depth0,helpers,partials,data) {
-  return "<div class=\"tab\">\nProfile\n</div>\n";
-  },"useData":true});
-
-
-
 this["RDR"]["prototype"]["Templates"]["/admin/settings"] = Handlebars.template({"compiler":[6,">= 2.0.0-beta.1"],"main":function(depth0,helpers,partials,data) {
-  var stack1, helper, functionType="function", helperMissing=helpers.helperMissing, buffer = "Settings.\n\n<div class=\"tab\">\n<a href=\"#/admin/settings/index\">General</a>\n<a href=\"#/admin/settings/triggers\">Triggers</a>\n<a href=\"#/admin/settings/canned\">Canned</a>\n<a href=\"#/admin/settings/introducers\">Introducers</a>\n\n";
+  var stack1, helper, functionType="function", helperMissing=helpers.helperMissing, buffer = "Settings.\n\n<div class=\"pane\">\n<div class=\"tabs\">\n<div class=\"nav\">\n<a href=\"#/admin/settings/index\">General</a>\n<a href=\"#/admin/settings/triggers\">Triggers</a>\n<a href=\"#/admin/settings/canned\">Canned</a>\n<a href=\"#/admin/settings/introducers\">Introducers</a>\n<a href=\"#/admin/settings/me\">My Profile</a>\n</div>\n\n<div class=\"tab\">\n";
   stack1 = ((helper = (helper = helpers.outlet || (depth0 != null ? depth0.outlet : depth0)) != null ? helper : helperMissing),(typeof helper === functionType ? helper.call(depth0, {"name":"outlet","hash":{},"data":data}) : helper));
   if (stack1 != null) { buffer += stack1; }
-  return buffer + "\n</div>\n";
+  return buffer + "\n</div>\n</div>\n</div>\n";
 },"useData":true});
 
 
@@ -7324,23 +8133,14 @@ this["RDR"]["prototype"]["Templates"]["/admin/settings/canned"] = Handlebars.tem
   var stack1, buffer = "Canned.\n\n<table>\n<thead>\n<tr>\n<th>Hashtag</th>\n<th>Message</th>\n<th>Delete</th>\n</tr>\n</thead>\n<tbody>\n";
   stack1 = helpers.each.call(depth0, (depth0 != null ? depth0.arrangedContent : depth0), {"name":"each","hash":{},"fn":this.program(1, data),"inverse":this.noop,"data":data});
   if (stack1 != null) { buffer += stack1; }
-  return buffer + "</tbody>\n</table>\n\n<button>Add Canned Message</button>\n";
+  return buffer + "</tbody>\n</table>\n\n<button class=\"fluid_width\">Add Canned Message</button>\n";
 },"useData":true});
 
 
 
 this["RDR"]["prototype"]["Templates"]["/admin/settings/index"] = Handlebars.template({"compiler":[6,">= 2.0.0-beta.1"],"main":function(depth0,helpers,partials,data) {
-  var helperMissing=helpers.helperMissing, escapeExpression=this.escapeExpression;
-  return "General Settings. Include, exclude,\n\n<form>\n<div class=\"field\">\n<label>\nInclude<br>\n<input type=\"text\" "
-    + escapeExpression(((helpers['bind-attr'] || (depth0 && depth0['bind-attr']) || helperMissing).call(depth0, {"name":"bind-attr","hash":{
-    'value': ((depth0 != null ? depth0.include : depth0))
-  },"data":data})))
-    + ">\n</label>\n</div>\n\n<div class=\"field\">\n<label>\nExclude<br>\n<input type=\"text\" "
-    + escapeExpression(((helpers['bind-attr'] || (depth0 && depth0['bind-attr']) || helperMissing).call(depth0, {"name":"bind-attr","hash":{
-    'value': ((depth0 != null ? depth0.exclude : depth0))
-  },"data":data})))
-    + ">\n</label>\n</div>\n\n<div class=\"actions\">\n<input type=\"submit\">\n</div>\n</form>\n";
-},"useData":true});
+  return "<form>\n<div class=\"field\">\n<label>Which pages should <strong>show</strong> your chatbox?</label>\n<input type=\"text\">\n</div>\n\n<div class=\"field\">\n<label>Which pages should <strong>hide</strong> your chatbox?</label>\n<input type=\"text\">\n</div>\n\n<button type=\"submit\" class=\"fluid_width\">Save Settings</button>\n</form>\n";
+  },"useData":true});
 
 
 
@@ -7365,13 +8165,19 @@ this["RDR"]["prototype"]["Templates"]["/admin/settings/introducers"] = Handlebar
   var stack1, buffer = "Introducer Fields.\n\n<table>\n<thead>\n<tr>\n<th>Name</th>\n<th>Label</th>\n<th>Required</th>\n<th>Type</th>\n<th>Validator</th>\n<th>Ordinal</th>\n<th>Delete</th>\n</tr>\n</thead>\n<tbody>\n";
   stack1 = helpers.each.call(depth0, (depth0 != null ? depth0.arrangedContent : depth0), {"name":"each","hash":{},"fn":this.program(1, data),"inverse":this.noop,"data":data});
   if (stack1 != null) { buffer += stack1; }
-  return buffer + "</tbody>\n</table>\n\n<button>Add Introducer</button>\n";
+  return buffer + "</tbody>\n</table>\n\n<button class=\"fluid_width\">Add Introducer</button>\n";
 },"useData":true});
 
 
 
 this["RDR"]["prototype"]["Templates"]["/admin/settings/loading"] = Handlebars.template({"compiler":[6,">= 2.0.0-beta.1"],"main":function(depth0,helpers,partials,data) {
   return "<div class=\"admin_loading\"></div>\n";
+  },"useData":true});
+
+
+
+this["RDR"]["prototype"]["Templates"]["/admin/settings/me"] = Handlebars.template({"compiler":[6,">= 2.0.0-beta.1"],"main":function(depth0,helpers,partials,data) {
+  return "<form>\n<div class=\"field\">\n<label>What is your email address?</label>\n<input type=\"text\">\n</div>\n\n<div class=\"field\">\n<label>What is your time zone?</label>\n<input type=\"text\">\n</div>\n\n<button type=\"submit\" class=\"fluid_width\">Save My Profile</button>\n</form>\n";
   },"useData":true});
 
 
@@ -7391,13 +8197,13 @@ this["RDR"]["prototype"]["Templates"]["/admin/settings/triggers"] = Handlebars.t
   var stack1, buffer = "Triggers.\n\n<table>\n<thead>\n<tr>\n<th>Delay</th>\n<th>Exclude</th>\n<th>Include</th>\n<th>Message</th>\n<th>Delete</th>\n</tr>\n</thead>\n<tbody>\n";
   stack1 = helpers.each.call(depth0, (depth0 != null ? depth0.arrangedContent : depth0), {"name":"each","hash":{},"fn":this.program(1, data),"inverse":this.noop,"data":data});
   if (stack1 != null) { buffer += stack1; }
-  return buffer + "</tbody>\n</table>\n\n<button>Add Trigger</button>\n";
+  return buffer + "</tbody>\n</table>\n\n<button class=\"fluid_width\">Add Trigger</button>\n";
 },"useData":true});
 
 
 
 this["RDR"]["prototype"]["Templates"]["/admin/upgrade"] = Handlebars.template({"compiler":[6,">= 2.0.0-beta.1"],"main":function(depth0,helpers,partials,data) {
-  return "<div class=\"tab\">\nThis is how to upgrade.\n</div>\n";
+  return "<div class=\"pane\">\nThis is how to upgrade.\n</div>\n";
   },"useData":true});
 
 
@@ -7425,7 +8231,7 @@ this["RDR"]["prototype"]["Templates"]["/admin/visitors"] = Handlebars.template({
   },"4":function(depth0,helpers,partials,data) {
   return "has_unread";
   },"compiler":[6,">= 2.0.0-beta.1"],"main":function(depth0,helpers,partials,data) {
-  var stack1, helper, functionType="function", helperMissing=helpers.helperMissing, buffer = "Visitors.\n\n<div class=\"tab\" data-tab=\"!/visitors\">\n\n<input type=\"text\" class=\"visitors_search\" placeholder=\"Search...\">\n\n<div class=\"visitors\">\n\n";
+  var stack1, helper, functionType="function", helperMissing=helpers.helperMissing, buffer = "Visitors.\n\n<div class=\"pane\" data-tab=\"!/visitors\">\n\n<input type=\"text\" class=\"visitors_search\" placeholder=\"Search...\">\n\n<div class=\"visitors\">\n\n";
   stack1 = helpers.each.call(depth0, (depth0 != null ? depth0.arrangedContent : depth0), {"name":"each","hash":{},"fn":this.program(1, data),"inverse":this.noop,"data":data});
   if (stack1 != null) { buffer += stack1; }
   buffer += "\n</div>\n\n";
@@ -7502,7 +8308,7 @@ this["RDR"]["prototype"]["Templates"]["/admin/visitors/visitor"] = Handlebars.te
 
 
 this["RDR"]["prototype"]["Templates"]["/application"] = Handlebars.template({"compiler":[6,">= 2.0.0-beta.1"],"main":function(depth0,helpers,partials,data) {
-  var stack1, helper, functionType="function", helperMissing=helpers.helperMissing, buffer = "<a href=\"#/admin\">Admin</a> | <a href=\"#/chatbox\">Chatbox</a><br><br>\n";
+  var stack1, helper, functionType="function", helperMissing=helpers.helperMissing, buffer = "<a href=\"#/admin/visitors\">Admin</a> | <a href=\"#/chatbox\">Chatbox</a><br><br>\n";
   stack1 = ((helper = (helper = helpers.outlet || (depth0 != null ? depth0.outlet : depth0)) != null ? helper : helperMissing),(typeof helper === functionType ? helper.call(depth0, {"name":"outlet","hash":{},"data":data}) : helper));
   if (stack1 != null) { buffer += stack1; }
   return buffer + "\n";
@@ -7510,20 +8316,44 @@ this["RDR"]["prototype"]["Templates"]["/application"] = Handlebars.template({"co
 
 
 
-this["RDR"]["prototype"]["Templates"]["/chatbox"] = Handlebars.template({"compiler":[6,">= 2.0.0-beta.1"],"main":function(depth0,helpers,partials,data) {
-  return "<div class=\"chatbox\">\n<div class=\"topbar\">\n<h1>Lively Chat Support</h1>\n<p class=\"close icon\">&times;</p>\n</div>\n\n<div class=\"header\">\n<div class=\"profile\">\n<img src=\"assets/imgs/avatar.jpg\">\n<p class=\"served_by_description\">\nYou're talking to\n<span class=\"agent_name\">Dallas</span>\n</p>\n</div>\n</div>\n\n<div class=\"messages\">\n<div class=\"overlay\"></div>\n</div>\n\n<form class=\"introducer form\">\n<p class=\"please_introduce\">\nTo start talking with <span class=\"agent_name\">Dallas</span>,<br>please introduce yourself.\n</p>\n\n<button type=\"submit\" class=\"fb_button\">\nIntroduce Myself through Facebook\n</button>\n\n<p class=\"or\">or</p>\n\n<div class=\"fields\"></div>\n\n<button type=\"submit\">\nIntroduce Myself\n</button>\n</form>\n\n<form class=\"new_message\">\n<textarea placeholder=\"What's on your mind?\"></textarea>\n<div class=\"action_row\">\n<button type=\"submit\">Send</button>\n<p class=\"upload_icon\"></p>\n<div class=\"clear\"></div>\n</div>\n</form>\n</div>\n\n<div class=\"prompter\">\n<div class=\"agent_avatar\">\n<p class=\"unread_messages_count\">3</p>\n<img src=\"assets/imgs/avatar.jpg\">\n</div>\n<p class=\"bubble\">\nI was wondering if you had any 3rd apples to display to the crew.\n</p>\n</div>\n";
-  },"useData":true});
-
-
-
-this["RDR"]["prototype"]["Templates"]["/index"] = Handlebars.template({"compiler":[6,">= 2.0.0-beta.1"],"main":function(depth0,helpers,partials,data) {
-  return "Index of Indexes.\n";
-  },"useData":true});
+this["RDR"]["prototype"]["Templates"]["/chatbox"] = Handlebars.template({"1":function(depth0,helpers,partials,data) {
+  return "text";
+  },"3":function(depth0,helpers,partials,data) {
+  var helper, functionType="function", helperMissing=helpers.helperMissing, escapeExpression=this.escapeExpression;
+  return "data-validator=\""
+    + escapeExpression(((helper = (helper = helpers.validator || (depth0 != null ? depth0.validator : depth0)) != null ? helper : helperMissing),(typeof helper === functionType ? helper.call(depth0, {"name":"validator","hash":{},"data":data}) : helper)))
+    + "\"";
+},"5":function(depth0,helpers,partials,data) {
+  return "required";
+  },"compiler":[6,">= 2.0.0-beta.1"],"main":function(depth0,helpers,partials,data) {
+  var stack1, helper, functionType="function", helperMissing=helpers.helperMissing, escapeExpression=this.escapeExpression, buffer = "<div class=\"chatbox\">\n<div class=\"topbar\">\n<h1>Lively Chat Support</h1>\n<a href=\"#/\" class=\"close icon\">&times;</a>\n</div>\n\n<div class=\"header\">\n<div class=\"profile\">\n<img src=\"assets/imgs/avatar.jpg\">\n<p class=\"served_by_description\">\nYou're talking to\n<span class=\"agent_name\">Dallas</span>\n</p>\n</div>\n</div>\n\n<div class=\"messages\">\n<div class=\"overlay\"></div>\n</div>\n\n<form class=\"introducer form\">\n<p class=\"please_introduce\">\nTo start talking with <span class=\"agent_name\">Dallas</span>,<br>please introduce yourself.\n</p>\n\n<button type=\"submit\" class=\"fb_blue\">\nIntroduce Myself through Facebook\n</button>\n\n<p class=\"or\">or</p>\n\n<div class=\"fields\">\n<div class=\"field\">\n<label for=\"field_"
+    + escapeExpression(((helper = (helper = helpers.name || (depth0 != null ? depth0.name : depth0)) != null ? helper : helperMissing),(typeof helper === functionType ? helper.call(depth0, {"name":"name","hash":{},"data":data}) : helper)))
+    + "\">"
+    + escapeExpression(((helper = (helper = helpers.label || (depth0 != null ? depth0.label : depth0)) != null ? helper : helperMissing),(typeof helper === functionType ? helper.call(depth0, {"name":"label","hash":{},"data":data}) : helper)))
+    + "</label>\n<input type=\""
+    + escapeExpression(((helper = (helper = helpers.type || (depth0 != null ? depth0.type : depth0)) != null ? helper : helperMissing),(typeof helper === functionType ? helper.call(depth0, {"name":"type","hash":{},"data":data}) : helper)));
+  stack1 = helpers.unless.call(depth0, (depth0 != null ? depth0.type : depth0), {"name":"unless","hash":{},"fn":this.program(1, data),"inverse":this.noop,"data":data});
+  if (stack1 != null) { buffer += stack1; }
+  buffer += "\" id=\"field_"
+    + escapeExpression(((helper = (helper = helpers.name || (depth0 != null ? depth0.name : depth0)) != null ? helper : helperMissing),(typeof helper === functionType ? helper.call(depth0, {"name":"name","hash":{},"data":data}) : helper)))
+    + "\" name=\""
+    + escapeExpression(((helper = (helper = helpers.name || (depth0 != null ? depth0.name : depth0)) != null ? helper : helperMissing),(typeof helper === functionType ? helper.call(depth0, {"name":"name","hash":{},"data":data}) : helper)))
+    + "\" placeholder=\""
+    + escapeExpression(((helper = (helper = helpers.label || (depth0 != null ? depth0.label : depth0)) != null ? helper : helperMissing),(typeof helper === functionType ? helper.call(depth0, {"name":"label","hash":{},"data":data}) : helper)))
+    + "\" ";
+  stack1 = helpers['if'].call(depth0, (depth0 != null ? depth0.validator : depth0), {"name":"if","hash":{},"fn":this.program(3, data),"inverse":this.noop,"data":data});
+  if (stack1 != null) { buffer += stack1; }
+  buffer += " ";
+  stack1 = helpers['if'].call(depth0, (depth0 != null ? depth0.required : depth0), {"name":"if","hash":{},"fn":this.program(5, data),"inverse":this.noop,"data":data});
+  if (stack1 != null) { buffer += stack1; }
+  return buffer + ">\n</div>\n</div>\n\n<button type=\"submit\">\nIntroduce Myself\n</button>\n</form>\n\n<form class=\"new_message\">\n<textarea placeholder=\"What's on your mind?\"></textarea>\n<div class=\"action_row\">\n<button type=\"submit\">Send</button>\n<p class=\"upload_icon\"></p>\n<div class=\"clear\"></div>\n</div>\n</form>\n</div>\n\n<div class=\"prompter\">\n<div class=\"agent_avatar\">\n<p class=\"unread_messages_count\">3</p>\n<img src=\"assets/imgs/avatar.jpg\">\n</div>\n<p class=\"bubble\">\nI was wondering if you had any 3rd apples to display to the crew.\n</p>\n</div>\n";
+},"useData":true});
 this.Lively = new RDR;
 
 Lively.Config = {
   container: "#lcs",
   history: "#",
+  firebase: "lively-chat-support",
   debug: true
 };
 
@@ -7534,13 +8364,13 @@ Lively.Routes = {
       "/:visitor_id": true
     },
     "/agents": true,
-    "/profile": true,
     "/upgrade": true,
     "/setup": true,
     "/settings": {
       "/triggers": true,
       "/canned": true,
-      "/introducers": true
+      "/introducers": true,
+      "/me": true
     }
   }
 };
@@ -7553,13 +8383,29 @@ Lively.Initializers.push(function() {
 
 Lively.Controllers["/admin"] = {
   vars: {},
-  init: function() {}
+  init: function() {
+    return $("body").css("overflow", "hidden");
+  },
+  actions: function() {
+    return {
+      closeAdmin: function() {
+        return Lively.fetchPath("/");
+      }
+    };
+  }
 };
 
 Lively.Controllers["/admin/settings"] = {
   vars: {},
   init: function() {
     return alert("from settings.");
+  }
+};
+
+Lively.Controllers["/admin"] = {
+  vars: {},
+  init: function() {
+    return $("body").css("overflow", "auto");
   }
 };
 

@@ -5347,27 +5347,27 @@ RDR = (function(_super) {
 
   _Class.prototype.Boot = function() {
     var index, init, r, _i, _len, _ref;
-    this.Info("===== App is initializing. =====");
+    this.Log("App", "Initializing");
     _ref = this.Initializers;
     for (index = _i = 0, _len = _ref.length; _i < _len; index = ++_i) {
       init = _ref[index];
-      this.Info("Boot: Initializer Executing: #" + index);
+      this.Warn("Booter", "Initializer Executing: #" + index);
       if (typeof init === "function") {
         init();
       }
     }
-    this.Info("Boot: App is Booting");
+    this.Debug("Booter", "Booting");
     this.createTemplates();
+    FastClick.attach(document.body);
     r = this;
     if (/\#|hash/.test(this.Config.history)) {
-      this.Info("Boot: RDR History is Now: #");
+      this.Log("Booter", "RDR History is Now: #");
       this.Config.history = "#";
       if (window.location.hash === "") {
         window.location.hash = "#/";
       }
       $(window).bind("hashchange", function() {
-        r.currentPath = window.location.hash.replace("#", "");
-        return r.fetchPath(r.currentPath);
+        return r.fetchPath(window.location.hash.replace("#", ""));
       });
       return $(window).trigger("hashchange");
     } else {
@@ -5392,30 +5392,33 @@ RDR = (function(_super) {
     return _Class.__super__.constructor.apply(this, arguments);
   }
 
-  _Class.prototype.Logger = function(type, a) {
+  _Class.prototype.Logger = function(log_level, a, b) {
+    var c, class_length;
     if (typeof this.Config !== "undefined" && this.Config.debug) {
-      return console[type](a);
+      class_length = 10;
+      c = new Array(class_length - a.length).join(" ");
+      return console[log_level]("" + c + a + " :: " + b);
     }
   };
 
-  _Class.prototype.Log = function(a) {
-    return this.Logger("log", a);
+  _Class.prototype.Log = function(a, b) {
+    return this.Logger("log", a, b);
   };
 
-  _Class.prototype.Info = function(a) {
-    return this.Logger("info", a);
+  _Class.prototype.Info = function(a, b) {
+    return this.Logger("info", a, b);
   };
 
-  _Class.prototype.Debug = function(a) {
-    return this.Logger("debug", a);
+  _Class.prototype.Debug = function(a, b) {
+    return this.Logger("debug", a, b);
   };
 
-  _Class.prototype.Warn = function(a) {
-    return this.Logger("warn", a);
+  _Class.prototype.Warn = function(a, b) {
+    return this.Logger("warn", a, b);
   };
 
-  _Class.prototype.Error = function(a) {
-    return this.Logger("error", a);
+  _Class.prototype.Error = function(a, b) {
+    return this.Logger("error", a, b);
   };
 
   return _Class;
@@ -5444,7 +5447,6 @@ RDR = (function(_super) {
     if (callback == null) {
       callback = false;
     }
-    views.push("index");
     views_path = views.join("/");
     view_paths = [];
     views = views.reverse();
@@ -5458,9 +5460,9 @@ RDR = (function(_super) {
       view_path = "/" + (path.join("/"));
       dasherized_path = path.join("-");
       view_paths.push(view_path);
-      this.Info("Router: Fetching View: " + view_path);
+      this.Log("Views", "Fetching: " + view_path);
       if ($(".rdr-template-" + dasherized_path).length) {
-        this.Debug("Router: View Already Present: " + view_path);
+        this.Warn("Views", "Already Present: " + view_path);
         if (!placer.length) {
           placer = $(".rdr-template-" + dasherized_path + "-outlet");
         }
@@ -5469,9 +5471,9 @@ RDR = (function(_super) {
           html = this.buildFromTemplate(this.Templates[view_path], {
             outlet: html
           }, dasherized_path);
-          this.Info("Router: View Generated: " + view_path);
+          this.Log("Views", "Generated: " + view_path);
         } else {
-          this.Warn("Router: View Not Found: " + view_path);
+          this.Warn("Views", "Not Found: " + view_path);
         }
       }
     }
@@ -5479,18 +5481,24 @@ RDR = (function(_super) {
       placer = $(this.Config.container).find(".rdr-template-application-outlet");
     }
     placer.html(html);
-    this.Info("Router: View Resolved: /" + views_path);
+    this.Log("Views", "Resolved: /" + views_path);
     if (typeof callback === "function") {
       return callback(this.Config.container, view_paths);
     }
   };
 
   _Class.prototype.fetchPath = function(path) {
-    var segments;
-    this.Info("Router: Fetching Route: " + path);
+    var new_path, segments;
+    this.Debug("Router", "Fetching: " + path);
     segments = this.findRoute(path);
-    this.Info("Router: Found Route: /" + (segments.join("/")));
-    return this.findViews(segments, this.markActiveRoutes);
+    new_path = "/" + (segments.join("/"));
+    if (new_path === this.currentPath) {
+      return this.Debug("Router", "Already Active: " + path);
+    } else {
+      this.currentPath = new_path;
+      this.Debug("Router", "Found: " + new_path);
+      return this.findViews(segments, this.markActiveRoutes);
+    }
   };
 
   _Class.prototype.markActiveRoutes = function(c, view_paths) {
@@ -5538,6 +5546,9 @@ RDR = (function(_super) {
           false;
         }
       }
+    }
+    if (selected_path[selected_path.length - 1] !== "index") {
+      selected_path.push("index");
     }
     return selected_path;
   };

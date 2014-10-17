@@ -101,7 +101,7 @@ module.exports = function(grunt) {
 		  },
 		  vendor_css: {
 		    files: ["vendor/styles/**/*"],
-		    tasks: ["cssmin"]
+		    tasks: ["css"]
 		  },
 		  css: {
 		    files: ["styles/**/*"],

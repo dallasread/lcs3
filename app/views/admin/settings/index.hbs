@@ -1,21 +1,13 @@
-General Settings. Include, exclude,
-
 <form>
 	<div class="field">
-		<label>
-			Include<br>
-			<input type="text" {{bind-attr value=include}}>
-		</label>
+		<label>Which pages should <strong>show</strong> your chatbox?</label>
+		<input type="text">
 	</div>
 
 	<div class="field">
-		<label>
-			Exclude<br>
-			<input type="text" {{bind-attr value=exclude}}>
-		</label>
+		<label>Which pages should <strong>hide</strong> your chatbox?</label>
+		<input type="text">
 	</div>
 
-	<div class="actions">
-		<input type="submit">
-	</div>
+	<button type="submit" class="fluid_width">Save Settings</button>
 </form>
