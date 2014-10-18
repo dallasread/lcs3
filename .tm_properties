@@ -1,2 +1,2 @@
-exclude = "{node_modules,rdr,tmp}"
+exclude = "{node_modules,rdr,tmp,public}"
 excludeInFolderSearch = "{$excludeInFolderSearch,$extraExcludes,rdr,tmp,public,vendor}"

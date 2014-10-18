@@ -1,0 +1,38 @@
+#lcs {
+	.table {
+		width: 100%;
+
+		tr {
+			border-top: 1px solid #ccc;
+			border-bottom: 1px solid #ccc;
+			
+			th, td {
+				padding: 15px 10px;
+				text-align: left;
+			}
+		
+			th {
+				background: #eee;
+				font-size: 13px;
+				line-height: 13px;
+				text-transform: uppercase;
+				color: #444;
+				font-weight: bold;
+			}
+		
+			td {
+				font-size: 16px;
+				line-height: 24px;
+				color: #444;
+				vertical-align: middle;
+				
+				&.header_column {
+					font-weight: bold;
+					font-size: 21px;
+					line-height: 26px;
+					color: #111;
+				}
+			}
+		}
+	}
+}

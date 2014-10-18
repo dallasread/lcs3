@@ -11,6 +11,18 @@
 			overflow-x: hidden;
 			-webkit-overflow-scrolling: touch;
 			padding: 30px;
+			
+			h2 {
+				font-weight: bold;
+				margin-bottom: 10px;
+				font-size: 32px;
+				line-height: 40px;
+				color: #111;
+			}
+			
+			p {
+				margin-bottom: 40px;
+			}
 		}
 	}
 }

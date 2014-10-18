@@ -32,7 +32,7 @@
 		<div class="fields">
 			<div class="field">
 				<label for="field_{{ name }}">{{ label }}</label>
-				<input type="{{ type }}{{#unless type}}text{{/unless}}" id="field_{{ name }}" name="{{ name }}" placeholder="{{ label }}" {{#if validator}}data-validator="{{ validator }}"{{/if}} {{#if required}}required{{/if}}>
+				<input type="text" id="field_{{ name }}" name="{{ name }}" placeholder="First Name" {{#if validator}}data-validator="{{ validator }}"{{/if}} {{#if required}}required{{/if}}>
 			</div>
 		</div>
 

@@ -5,7 +5,7 @@
 	
 	p, label, input, textarea, button, .button {
 		font-size: 16px;
-		line-height: 22px;
+		line-height: 23px;
 		color: #444;
 		margin-bottom: 20px;
 	}
@@ -36,7 +36,6 @@
 	
 	button, .button {
 		display: inline-block;
-		padding: 15px 23px;
 		cursor: pointer;
 		text-align: center;
 		box-shadow: none;
@@ -44,13 +43,24 @@
 		margin: 0;
 		border-radius: 5px;
 		background: #4F8F5C;
-		font-size: 17px;
-		line-height: 17px;
 		color: #fff;
 		word-break: keep-all;
+		padding: 15px 23px;
+		font-size: 17px;
+		line-height: 17px;
 		
 		&.fb_blue {
 			background: #185B93;
+		}
+		
+		&.gray {
+			background: #aaa;
+		}
+		
+		&.small {
+			padding: 8px 15px;
+			font-size: 14px;
+			line-height: 14px;		
 		}
 	}
 }

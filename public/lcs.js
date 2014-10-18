@@ -8081,23 +8081,9 @@ this["RDR"]["prototype"]["Templates"]["/admin"] = Handlebars.template({"compiler
 
 
 
-this["RDR"]["prototype"]["Templates"]["/admin/agents"] = Handlebars.template({"1":function(depth0,helpers,partials,data) {
-  var stack1, helper, functionType="function", helperMissing=helpers.helperMissing, escapeExpression=this.escapeExpression, buffer = "<tr>\n<td>";
-  stack1 = helpers['if'].call(depth0, (depth0 != null ? depth0.online : depth0), {"name":"if","hash":{},"fn":this.program(2, data),"inverse":this.noop,"data":data});
-  if (stack1 != null) { buffer += stack1; }
-  return buffer + "</td>\n<td>"
-    + escapeExpression(((helper = (helper = helpers.name || (depth0 != null ? depth0.name : depth0)) != null ? helper : helperMissing),(typeof helper === functionType ? helper.call(depth0, {"name":"name","hash":{},"data":data}) : helper)))
-    + "</td>\n<td>"
-    + escapeExpression(((helper = (helper = helpers.email || (depth0 != null ? depth0.email : depth0)) != null ? helper : helperMissing),(typeof helper === functionType ? helper.call(depth0, {"name":"email","hash":{},"data":data}) : helper)))
-    + "</td>\n<td><button>Remove</button></td>\n</tr>\n";
-},"2":function(depth0,helpers,partials,data) {
-  return "&check;";
-  },"compiler":[6,">= 2.0.0-beta.1"],"main":function(depth0,helpers,partials,data) {
-  var stack1, buffer = "<div class=\"pane\">\n\n<table>\n<thead>\n<tr>\n<th>Status</th>\n<th>Name</th>\n<th>Email</th>\n<th></th>\n</tr>\n</thead>\n<tbody>\n";
-  stack1 = helpers.each.call(depth0, (depth0 != null ? depth0.arrangedContent : depth0), {"name":"each","hash":{},"fn":this.program(1, data),"inverse":this.noop,"data":data});
-  if (stack1 != null) { buffer += stack1; }
-  return buffer + "</tbody>\n</table>\n\n<button class=\"fluid_width\">Add Agent</button>\n\n</div>\n";
-},"useData":true});
+this["RDR"]["prototype"]["Templates"]["/admin/agents"] = Handlebars.template({"compiler":[6,">= 2.0.0-beta.1"],"main":function(depth0,helpers,partials,data) {
+  return "<div class=\"pane\">\n\n<h2>Agents</h2>\n\n<p>This is a desciprtion of agents. Should you need any help, don't be afraid to ask for it. This is a desciprtion of agents. Should you need any help, don't be afraid to ask for it. </p>\n\n<table class=\"table\">\n<thead>\n<tr>\n<th style=\"width: 11%;\" class=\"align_center\">Online</th>\n<th style=\"width: 25%;\">Name</th>\n<th style=\"width: 54%;\">Email</th>\n<th style=\"width: 10%;\"></th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td class=\"align_center\">\n<i class=\"fa fa-check-circle fa-lrg online\"></i>\n</td>\n<td>Dallas Read</td>\n<td>dallas@excitecreative.ca</td>\n<td class=\"align_right\">\n<button class=\"fluid_width small gray red_hover\">\n<i class=\"fa fa-trash fa-mdm\"></i>\n</button>\n</td>\n</tr>\n<tr>\n<td class=\"align_center\">\n<i class=\"fa fa-times-circle fa-lrg offline\"></i>\n</td>\n<td>Owen Read</td>\n<td>owen@dallasread.com</td>\n<td class=\"align_right\">\n<button class=\"fluid_width small gray red_hover\">\n<i class=\"fa fa-trash fa-mdm\"></i>\n</button>\n</td>\n</tr>\n<tr>\n<td class=\"align_center\">\n<i class=\"fa fa-times-circle fa-lrg offline\"></i>\n</td>\n<td>Another Agent</td>\n<td>another@agent.com</td>\n<td class=\"align_right\">\n<button class=\"fluid_width small gray red_hover\">\n<i class=\"fa fa-trash fa-mdm\"></i>\n</button>\n</td>\n</tr>\n</tbody>\n</table>\n\n<div class=\"upper_space\">\n<button>Add Agent</button>\n</div>\n\n</div>\n";
+  },"useData":true});
 
 
 
@@ -8122,24 +8108,14 @@ this["RDR"]["prototype"]["Templates"]["/admin/settings"] = Handlebars.template({
 
 
 
-this["RDR"]["prototype"]["Templates"]["/admin/settings/canned"] = Handlebars.template({"1":function(depth0,helpers,partials,data) {
-  var stack1, helper, functionType="function", helperMissing=helpers.helperMissing, escapeExpression=this.escapeExpression, lambda=this.lambda;
-  return "<tr>\n<td>"
-    + escapeExpression(((helper = (helper = helpers.permalink || (depth0 != null ? depth0.permalink : depth0)) != null ? helper : helperMissing),(typeof helper === functionType ? helper.call(depth0, {"name":"permalink","hash":{},"data":data}) : helper)))
-    + "</td>\n<td>"
-    + escapeExpression(lambda(((stack1 = (depth0 != null ? depth0.message : depth0)) != null ? stack1.body : stack1), depth0))
-    + "</td>\n<td><button>Remove</button></td>\n</tr>\n";
-},"compiler":[6,">= 2.0.0-beta.1"],"main":function(depth0,helpers,partials,data) {
-  var stack1, buffer = "Canned.\n\n<table>\n<thead>\n<tr>\n<th>Hashtag</th>\n<th>Message</th>\n<th>Delete</th>\n</tr>\n</thead>\n<tbody>\n";
-  stack1 = helpers.each.call(depth0, (depth0 != null ? depth0.arrangedContent : depth0), {"name":"each","hash":{},"fn":this.program(1, data),"inverse":this.noop,"data":data});
-  if (stack1 != null) { buffer += stack1; }
-  return buffer + "</tbody>\n</table>\n\n<button class=\"fluid_width\">Add Canned Message</button>\n";
-},"useData":true});
+this["RDR"]["prototype"]["Templates"]["/admin/settings/canned"] = Handlebars.template({"compiler":[6,">= 2.0.0-beta.1"],"main":function(depth0,helpers,partials,data) {
+  return "<p>Canned are the things that go crazy and crazier. Triggers are the things that go crazy and crazier. Triggers are the things that go crazy and crazier.</p>\n\n<table class=\"table\">\n<thead>\n<tr>\n<th style=\"width: 19%; \">Shortcut</th>\n<th style=\"width: 71%; \">Message</th>\n<th style=\"width: 10%; \"></th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td class=\"header_column align_center\">#perm</td>\n<td>This is a permanent message that may or may not be of service to you. It would be great if you could use it eventually one day.</td>\n<td class=\"align_right\">\n<button class=\"fluid_width small gray red_hover\">\n<i class=\"fa fa-trash\"></i>\n</button>\n</td>\n</tr>\n<tr>\n<td class=\"header_column align_center\">#waza</td>\n<td>Wazahhhhhh???!?!?!</td>\n<td class=\"align_right\">\n<button class=\"fluid_width small gray red_hover\">\n<i class=\"fa fa-trash\"></i>\n</button>\n</td>\n</tr>\n<tr>\n<td class=\"header_column align_center\">#coo</td>\n<td>Thanks for contacting us... that's coo!</td>\n<td class=\"align_right\">\n<button class=\"fluid_width small gray red_hover\">\n<i class=\"fa fa-trash\"></i>\n</button>\n</td>\n</tr>\n<tr>\n<td class=\"header_column align_center\">#perm</td>\n<td>This is a permanent message that may or may not be of service to you. It would be great if you could use it eventually one day.</td>\n<td class=\"align_right\">\n<button class=\"fluid_width small gray red_hover\">\n<i class=\"fa fa-trash\"></i>\n</button>\n</td>\n</tr>\n</tbody>\n</table>\n\n<div class=\"upper_space\">\n<button>Add Canned Message</button>\n</div>\n";
+  },"useData":true});
 
 
 
 this["RDR"]["prototype"]["Templates"]["/admin/settings/index"] = Handlebars.template({"compiler":[6,">= 2.0.0-beta.1"],"main":function(depth0,helpers,partials,data) {
-  return "<form>\n<div class=\"field\">\n<label>Which pages should <strong>show</strong> your chatbox?</label>\n<input type=\"text\">\n</div>\n\n<div class=\"field\">\n<label>Which pages should <strong>hide</strong> your chatbox?</label>\n<input type=\"text\">\n</div>\n\n<button type=\"submit\" class=\"fluid_width\">Save Settings</button>\n</form>\n";
+  return "<form>\n<div class=\"field\">\n<label>Which pages should <strong>show</strong> your chatbox?</label>\n<input type=\"text\">\n</div>\n\n<div class=\"field\">\n<label>Which pages should <strong>hide</strong> your chatbox?</label>\n<input type=\"text\">\n</div>\n\n<button type=\"submit\" class=\"full_width\">Save Settings</button>\n</form>\n";
   },"useData":true});
 
 
@@ -8162,10 +8138,10 @@ this["RDR"]["prototype"]["Templates"]["/admin/settings/introducers"] = Handlebar
 },"2":function(depth0,helpers,partials,data) {
   return "&check;";
   },"compiler":[6,">= 2.0.0-beta.1"],"main":function(depth0,helpers,partials,data) {
-  var stack1, buffer = "Introducer Fields.\n\n<table>\n<thead>\n<tr>\n<th>Name</th>\n<th>Label</th>\n<th>Required</th>\n<th>Type</th>\n<th>Validator</th>\n<th>Ordinal</th>\n<th>Delete</th>\n</tr>\n</thead>\n<tbody>\n";
+  var stack1, buffer = "<p>Introducers are the things that go crazy and crazier. Triggers are the things that go crazy and crazier. Triggers are the things that go crazy and crazier.</p>\n\n<table class=\"table\">\n<thead>\n<tr>\n<th>Name</th>\n<th>Label</th>\n<th>Required</th>\n<th>Type</th>\n<th>Validator</th>\n<th>Ordinal</th>\n<th>Delete</th>\n</tr>\n</thead>\n<tbody>\n";
   stack1 = helpers.each.call(depth0, (depth0 != null ? depth0.arrangedContent : depth0), {"name":"each","hash":{},"fn":this.program(1, data),"inverse":this.noop,"data":data});
   if (stack1 != null) { buffer += stack1; }
-  return buffer + "</tbody>\n</table>\n\n<button class=\"fluid_width\">Add Introducer</button>\n";
+  return buffer + "</tbody>\n</table>\n\n<div class=\"upper_space\">\n<button>Add Introducer</button>\n</div>\n";
 },"useData":true});
 
 
@@ -8177,7 +8153,7 @@ this["RDR"]["prototype"]["Templates"]["/admin/settings/loading"] = Handlebars.te
 
 
 this["RDR"]["prototype"]["Templates"]["/admin/settings/me"] = Handlebars.template({"compiler":[6,">= 2.0.0-beta.1"],"main":function(depth0,helpers,partials,data) {
-  return "<form>\n<div class=\"field\">\n<label>What is your email address?</label>\n<input type=\"text\">\n</div>\n\n<div class=\"field\">\n<label>What is your time zone?</label>\n<input type=\"text\">\n</div>\n\n<button type=\"submit\" class=\"fluid_width\">Save My Profile</button>\n</form>\n";
+  return "<form>\n<div class=\"field\">\n<label>What is your <strong>email address</strong>?</label>\n<input type=\"text\">\n</div>\n\n<div class=\"field\">\n<label>What is your <strong>time zone</strong>?</label>\n<input type=\"text\">\n</div>\n\n<button type=\"submit\" class=\"full_width\">Save My Profile</button>\n</form>\n";
   },"useData":true});
 
 
@@ -8194,10 +8170,10 @@ this["RDR"]["prototype"]["Templates"]["/admin/settings/triggers"] = Handlebars.t
     + escapeExpression(lambda(((stack1 = (depth0 != null ? depth0.message : depth0)) != null ? stack1.body : stack1), depth0))
     + "</td>\n<td><button>Remove</button></td>\n</tr>\n";
 },"compiler":[6,">= 2.0.0-beta.1"],"main":function(depth0,helpers,partials,data) {
-  var stack1, buffer = "Triggers.\n\n<table>\n<thead>\n<tr>\n<th>Delay</th>\n<th>Exclude</th>\n<th>Include</th>\n<th>Message</th>\n<th>Delete</th>\n</tr>\n</thead>\n<tbody>\n";
+  var stack1, buffer = "<p>Triggers are the things that go crazy and crazier. Triggers are the things that go crazy and crazier. Triggers are the things that go crazy and crazier.</p>\n\n<table class=\"table\">\n<thead>\n<tr>\n<th>Delay</th>\n<th>Exclude</th>\n<th>Include</th>\n<th>Message</th>\n<th>Delete</th>\n</tr>\n</thead>\n<tbody>\n";
   stack1 = helpers.each.call(depth0, (depth0 != null ? depth0.arrangedContent : depth0), {"name":"each","hash":{},"fn":this.program(1, data),"inverse":this.noop,"data":data});
   if (stack1 != null) { buffer += stack1; }
-  return buffer + "</tbody>\n</table>\n\n<button class=\"fluid_width\">Add Trigger</button>\n";
+  return buffer + "</tbody>\n</table>\n\n<div class=\"upper_space\">\n<button>Add Trigger</button>\n</div>\n";
 },"useData":true});
 
 
@@ -8317,34 +8293,26 @@ this["RDR"]["prototype"]["Templates"]["/application"] = Handlebars.template({"co
 
 
 this["RDR"]["prototype"]["Templates"]["/chatbox"] = Handlebars.template({"1":function(depth0,helpers,partials,data) {
-  return "text";
-  },"3":function(depth0,helpers,partials,data) {
   var helper, functionType="function", helperMissing=helpers.helperMissing, escapeExpression=this.escapeExpression;
   return "data-validator=\""
     + escapeExpression(((helper = (helper = helpers.validator || (depth0 != null ? depth0.validator : depth0)) != null ? helper : helperMissing),(typeof helper === functionType ? helper.call(depth0, {"name":"validator","hash":{},"data":data}) : helper)))
     + "\"";
-},"5":function(depth0,helpers,partials,data) {
+},"3":function(depth0,helpers,partials,data) {
   return "required";
   },"compiler":[6,">= 2.0.0-beta.1"],"main":function(depth0,helpers,partials,data) {
   var stack1, helper, functionType="function", helperMissing=helpers.helperMissing, escapeExpression=this.escapeExpression, buffer = "<div class=\"chatbox\">\n<div class=\"topbar\">\n<h1>Lively Chat Support</h1>\n<a href=\"#/\" class=\"close icon\">&times;</a>\n</div>\n\n<div class=\"header\">\n<div class=\"profile\">\n<img src=\"assets/imgs/avatar.jpg\">\n<p class=\"served_by_description\">\nYou're talking to\n<span class=\"agent_name\">Dallas</span>\n</p>\n</div>\n</div>\n\n<div class=\"messages\">\n<div class=\"overlay\"></div>\n</div>\n\n<form class=\"introducer form\">\n<p class=\"please_introduce\">\nTo start talking with <span class=\"agent_name\">Dallas</span>,<br>please introduce yourself.\n</p>\n\n<button type=\"submit\" class=\"fb_blue\">\nIntroduce Myself through Facebook\n</button>\n\n<p class=\"or\">or</p>\n\n<div class=\"fields\">\n<div class=\"field\">\n<label for=\"field_"
     + escapeExpression(((helper = (helper = helpers.name || (depth0 != null ? depth0.name : depth0)) != null ? helper : helperMissing),(typeof helper === functionType ? helper.call(depth0, {"name":"name","hash":{},"data":data}) : helper)))
     + "\">"
     + escapeExpression(((helper = (helper = helpers.label || (depth0 != null ? depth0.label : depth0)) != null ? helper : helperMissing),(typeof helper === functionType ? helper.call(depth0, {"name":"label","hash":{},"data":data}) : helper)))
-    + "</label>\n<input type=\""
-    + escapeExpression(((helper = (helper = helpers.type || (depth0 != null ? depth0.type : depth0)) != null ? helper : helperMissing),(typeof helper === functionType ? helper.call(depth0, {"name":"type","hash":{},"data":data}) : helper)));
-  stack1 = helpers.unless.call(depth0, (depth0 != null ? depth0.type : depth0), {"name":"unless","hash":{},"fn":this.program(1, data),"inverse":this.noop,"data":data});
-  if (stack1 != null) { buffer += stack1; }
-  buffer += "\" id=\"field_"
+    + "</label>\n<input type=\"text\" id=\"field_"
     + escapeExpression(((helper = (helper = helpers.name || (depth0 != null ? depth0.name : depth0)) != null ? helper : helperMissing),(typeof helper === functionType ? helper.call(depth0, {"name":"name","hash":{},"data":data}) : helper)))
     + "\" name=\""
     + escapeExpression(((helper = (helper = helpers.name || (depth0 != null ? depth0.name : depth0)) != null ? helper : helperMissing),(typeof helper === functionType ? helper.call(depth0, {"name":"name","hash":{},"data":data}) : helper)))
-    + "\" placeholder=\""
-    + escapeExpression(((helper = (helper = helpers.label || (depth0 != null ? depth0.label : depth0)) != null ? helper : helperMissing),(typeof helper === functionType ? helper.call(depth0, {"name":"label","hash":{},"data":data}) : helper)))
-    + "\" ";
-  stack1 = helpers['if'].call(depth0, (depth0 != null ? depth0.validator : depth0), {"name":"if","hash":{},"fn":this.program(3, data),"inverse":this.noop,"data":data});
+    + "\" placeholder=\"First Name\" ";
+  stack1 = helpers['if'].call(depth0, (depth0 != null ? depth0.validator : depth0), {"name":"if","hash":{},"fn":this.program(1, data),"inverse":this.noop,"data":data});
   if (stack1 != null) { buffer += stack1; }
   buffer += " ";
-  stack1 = helpers['if'].call(depth0, (depth0 != null ? depth0.required : depth0), {"name":"if","hash":{},"fn":this.program(5, data),"inverse":this.noop,"data":data});
+  stack1 = helpers['if'].call(depth0, (depth0 != null ? depth0.required : depth0), {"name":"if","hash":{},"fn":this.program(3, data),"inverse":this.noop,"data":data});
   if (stack1 != null) { buffer += stack1; }
   return buffer + ">\n</div>\n</div>\n\n<button type=\"submit\">\nIntroduce Myself\n</button>\n</form>\n\n<form class=\"new_message\">\n<textarea placeholder=\"What's on your mind?\"></textarea>\n<div class=\"action_row\">\n<button type=\"submit\">Send</button>\n<p class=\"upload_icon\"></p>\n<div class=\"clear\"></div>\n</div>\n</form>\n</div>\n\n<div class=\"prompter\">\n<div class=\"agent_avatar\">\n<p class=\"unread_messages_count\">3</p>\n<img src=\"assets/imgs/avatar.jpg\">\n</div>\n<p class=\"bubble\">\nI was wondering if you had any 3rd apples to display to the crew.\n</p>\n</div>\n";
 },"useData":true});
