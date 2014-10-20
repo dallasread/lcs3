@@ -1,12 +1,29 @@
 #lcs {
-	.admin_loading {
+	.loading {
 		position: fixed;
 		background: #eee;
-		background: url(/assets/imgs/loading.gif) center no-repeat rgba(255, 255, 255, 0.75);
+		background: url(imgs/loading.gif) center no-repeat rgba(255, 255, 255, 0.75);
 		z-index: 99999999;
-		top: $topbar_height;
-		right: 0;
-		bottom: 0;
-		left: $leftbar_width;
+	
+		&.application_loading {
+			top: 0;
+			right: 0;
+			bottom: 0;
+			left: 0;
+		}
+		
+		&.admin_loading {
+			top: $topbar_height;
+			right: 0;
+			bottom: 0;
+			left: $leftbar_width;
+		}
+		
+		&.admin_settings_loading {
+			top: $topbar_height + $tabs_nav_height;
+			right: 0;
+			bottom: 0;
+			left: $leftbar_width;
+		}
 	}
 }

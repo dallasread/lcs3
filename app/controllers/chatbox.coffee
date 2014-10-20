@@ -1,5 +1,4 @@
-Lively.Controllers["/admin"] =
+Lively.Controllers["/chatbox"] =
 	vars: {}
 	init: ->
-		$("body").css "overflow", "auto"
-		# alert "from admin ctlr."
+		false

@@ -1,8 +1,6 @@
 Lively.Controllers["/admin"] =
-	vars: {}
 	init: ->
-		$("body").css "overflow", "hidden"
-		# alert "from admin ctlr."
+		Lively.find "chatbox", { id: Lively.glob["chatbox"] }, "settings"
 	actions: ->
 		closeAdmin: ->
 			Lively.fetchPath "/"

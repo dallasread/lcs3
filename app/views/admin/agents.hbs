@@ -14,42 +14,20 @@
 			</tr>
 		</thead>
 		<tbody>
-			<tr>
-				<td class="align_center">
-					<i class="fa fa-check-circle fa-lrg online"></i>
-				</td>
-				<td>Dallas Read</td>
-				<td>dallas@excitecreative.ca</td>
-				<td class="align_right">
-					<button class="fluid_width small gray red_hover">
-						<i class="fa fa-trash fa-mdm"></i>
-					</button>
-				</td>
-			</tr>
-			<tr>
-				<td class="align_center">
-					<i class="fa fa-times-circle fa-lrg offline"></i>
-				</td>
-				<td>Owen Read</td>
-				<td>owen@dallasread.com</td>
-				<td class="align_right">
-					<button class="fluid_width small gray red_hover">
-						<i class="fa fa-trash fa-mdm"></i>
-					</button>
-				</td>
-			</tr>
-			<tr>
-				<td class="align_center">
-					<i class="fa fa-times-circle fa-lrg offline"></i>
-				</td>
-				<td>Another Agent</td>
-				<td>another@agent.com</td>
-				<td class="align_right">
-					<button class="fluid_width small gray red_hover">
-						<i class="fa fa-trash fa-mdm"></i>
-					</button>
-				</td>
-			</tr>
+			{{#each agents}}
+				<tr>
+					<td class="align_center">
+						<i class="fa fa-check-circle fa-lrg online"></i>
+					</td>
+					<td>{{ name }}</td>
+					<td>{{ email }}</td>
+					<td class="align_right">
+						<button class="fluid_width small gray red_hover">
+							<i class="fa fa-trash fa-mdm"></i>
+						</button>
+					</td>
+				</tr>
+			{{/each}}
 		</tbody>
 	</table>
 

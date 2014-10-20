@@ -37,7 +37,7 @@ module.exports = function(grunt) {
 						"config/config.coffee",
 						"config/routes.coffee",
 						"config/initializers/*.coffee",
-						"app/controllers/**/*.coffee",
+						"app/**/*.coffee",
 						"config/boot.coffee"
 					]
 				}
@@ -96,7 +96,7 @@ module.exports = function(grunt) {
 		    tasks: ["js"]
 			},
 		  js: {
-		    files: ["config/**/*.coffee", "app/controllers/**/*.coffee"],
+		    files: ["config/**/*.coffee", "app/**/*.coffee"],
 		    tasks: ["js"]
 		  },
 		  vendor_css: {

@@ -13,7 +13,7 @@
 	# 	LCS.installer.find("#install_field_email").focus()
 	# 
 	# LCS.logout = ->
-	# 	LCS.db.unauth()
+	# 	LCS.DS.unauth()
 	# 
 	# LCS.start = ->
 	# 	if LCS.user is null || typeof LCS.settings.admins[LCS.user.id] is null
@@ -24,17 +24,17 @@
 	# 
 	# LCS.init = ->
 	# 	LCS.token = $("script[data-lively]").data("lively")
-	# 	LCS.baseDB = new Firebase "https://lively-chat-support.firebaseio.com/"
-	# 	LCS.db = LCS.baseDB.child LCS.token
+	# 	LCS.baseDS = new Firebase "https://lively-chat-support.firebaseio.com/"
+	# 	LCS.DS = LCS.baseDS.child LCS.token
   # 
 	# 	LCS.addStyleSheets()
 	# 	LCS.addStructure()
 	# 	LCS.setVars()
 	# 	
-	# 	LCS.db.child("settings/agents").on "value", (snapshot) ->
+	# 	LCS.DS.child("settings/agents").on "value", (snapshot) ->
 	# 		LCS.agentCount = Object.keys(snapshot.val()).length if snapshot.val() isnt null
 	# 	
-	# 	LCS.db.child("settings").once "value", (snapshot) ->
+	# 	LCS.DS.child("settings").once "value", (snapshot) ->
 	# 		LCS.wrapper.fadeIn()
 	# 		
 	# 		if snapshot.val() is null

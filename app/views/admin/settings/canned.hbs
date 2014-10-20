@@ -3,48 +3,23 @@
 <table class="table">
 	<thead>
 		<tr>
-			<th style="width: 19%; ">Shortcut</th>
+			<th style="width: 19%; " class="align_center">Shortcut</th>
 			<th style="width: 71%; ">Message</th>
 			<th style="width: 10%; "></th>
 		</tr>
 	</thead>
 	<tbody>
-		<tr>
-			<td class="header_column align_center">#perm</td>
-			<td>This is a permanent message that may or may not be of service to you. It would be great if you could use it eventually one day.</td>
-			<td class="align_right">
-				<button class="fluid_width small gray red_hover">
-					<i class="fa fa-trash"></i>
-				</button>
-			</td>
-		</tr>
-		<tr>
-			<td class="header_column align_center">#waza</td>
-			<td>Wazahhhhhh???!?!?!</td>
-			<td class="align_right">
-				<button class="fluid_width small gray red_hover">
-					<i class="fa fa-trash"></i>
-				</button>
-			</td>
-		</tr>
-		<tr>
-			<td class="header_column align_center">#coo</td>
-			<td>Thanks for contacting us... that's coo!</td>
-			<td class="align_right">
-				<button class="fluid_width small gray red_hover">
-					<i class="fa fa-trash"></i>
-				</button>
-			</td>
-		</tr>
-		<tr>
-			<td class="header_column align_center">#perm</td>
-			<td>This is a permanent message that may or may not be of service to you. It would be great if you could use it eventually one day.</td>
-			<td class="align_right">
-				<button class="fluid_width small gray red_hover">
-					<i class="fa fa-trash"></i>
-				</button>
-			</td>
-		</tr>
+		{{#each canned}}
+			<tr>
+				<td class="header_column align_center">#{{ @key }}</td>
+				<td>{{ body }}</td>
+				<td class="align_right">
+					<button class="fluid_width small gray red_hover">
+						<i class="fa fa-trash"></i>
+					</button>
+				</td>
+			</tr>
+		{{/each}}
 	</tbody>
 </table>
 
