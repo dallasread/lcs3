@@ -1,6 +1,6 @@
 Lively.Models["canned"] =
 	plural: "canned"
-	dataPath: "chatboxes/{{chatbox}}/canned"
+	dataPath: "canned/{{chatbox}}"
 	fields:
 		chatbox: "string"
 		body: "string"

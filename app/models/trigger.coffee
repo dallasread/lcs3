@@ -1,5 +1,5 @@
 Lively.Models["trigger"] =
-	dataPath: "chatboxes/{{chatbox}}/triggers"
+	dataPath: "triggers/{{chatbox}}"
 	fields:
 		chatbox: "belongs_to"
 		active: "boolean"

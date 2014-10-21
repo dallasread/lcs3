@@ -12,6 +12,13 @@
 			left: 0;
 		}
 		
+		&.visitors_loading {
+			top: $topbar_height;
+			right: 0;
+			bottom: 0;
+			left: $leftbar_width + $visitors_width;
+		}
+		
 		&.admin_loading {
 			top: $topbar_height;
 			right: 0;

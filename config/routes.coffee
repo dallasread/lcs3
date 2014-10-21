@@ -2,7 +2,7 @@ Lively.Routes =
 	"/chatbox": true
 	"/admin":
 		"/visitors":
-			"/:visitor_id": "visitor"
+			"/:vistor_id": "visitor"
 		"/agents": true
 		"/upgrade": true
 		"/setup": true

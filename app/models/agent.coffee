@@ -1,5 +1,5 @@
 Lively.Models["agent"] =
-	dataPath: "chatboxes/{{chatbox}}/agents"
+	dataPath: "agents/{{chatbox}}"
 	fields:
 		chatbox: "string"
 		name: "string"

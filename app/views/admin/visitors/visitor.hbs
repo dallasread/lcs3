@@ -4,25 +4,25 @@
 		<li class="action"><i class="fa fa-sign-out" title="Transfer"></i></li>
 	</ul>
 	
-	{{gravatar-image email=email alt=name size="250" class="avatar"}}
+	{{!gravatar-image email=email alt=name size="250" class="avatar"}}
 		
 	<div class="info">
 		<h2 class="name">
-			{{ name }}
+			{{{ name }}}
 			<span class="show_more">more...</span>
 		</h2>
 		
-		<h3 class="location">{{ location }}</h3>
+		<h3 class="location">{{{ location }}}</h3>
 		
 		<p>
 			Served by:
-			{{ agent.name }}
+			{{{ agent.name }}}
 		</p>
 			
 		<ul class="tags">
 			{{#each tags}}
 				<li class="tag">
-					<span class="tag_label">{{ name }}</span>
+					<span class="tag_label">{{{ name }}}</span>
 					<span class="delete_tag">&times;</span>
 				</li>
 			{{/each}}
@@ -32,27 +32,27 @@
 	<div class="more">
 		<p>
 			<span class="more_label">Email</span>
-			<span class="more_detail">{{ email }}</span>
+			<span class="more_detail">{{{ email }}}</span>
 			<span class="clear"></span>
 		</p>
 		<p>
 			<span class="more_label">Phone</span>
-			<span class="more_detail">{{ mobile }}</span>
+			<span class="more_detail">{{{ mobile }}}</span>
 			<span class="clear"></span>
 		</p>
 		<p>
 			<span class="more_label">IP</span>
-			<span class="more_detail">{{ ip }}</span>
+			<span class="more_detail">{{{ ip }}}</span>
 			<span class="clear"></span>
 		</p>
 		<p>
 			<span class="more_label">Address</span>
-			<span class="more_detail">{{ address }}</span>
+			<span class="more_detail">{{{ address }}}</span>
 			<span class="clear"></span>
 		</p>
 		<p>
 			<span class="more_label">Last Seen</span>
-			<span class="more_detail"><span {{bind-attr title=updated_at}}>10 minutes ago</span></span>
+			<span class="more_detail"><span {{!bind-attr title=updated_at}}>10 minutes ago</span></span>
 			<span class="clear"></span>
 		</p>
 		<div class="clear"></div>
