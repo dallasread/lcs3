@@ -17,7 +17,7 @@
 			text-align: center;
 			cursor: pointer;
 			color: #aaa;
-			padding: 15px 0px;
+			padding: 19px 0px;
 			border-top: 1px solid transparent;
 			border-bottom: 1px solid transparent;
 			
@@ -29,20 +29,27 @@
 			
 			i {
 				display: block;
-				font-size: 40px;
-				line-height: 40px;
+				font-size: 45px;
+				line-height: 45px;
 				padding-bottom: 6px;
 			}
 			
 			&.toggle_status {
 				&.offline {
-					.fa-toggle-on, .toggle-on {
+				  i {
+						filter: progid:DXImageTransform.Microsoft.BasicImage(rotation=0, mirror=1);
+					  -webkit-transform: scale(-1, 1);
+					  -ms-transform: scale(-1, 1);
+					  transform: scale(-1, 1);
+					}
+					
+					.toggle-on {
 						display: none;
 					}
 				}
 				
 				&.online {
-					.fa-toggle-off, .toggle-off {
+					.toggle-off {
 						display: none;
 					}
 				}

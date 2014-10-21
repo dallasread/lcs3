@@ -35,8 +35,8 @@
 			display: block;
 			border-bottom: 1px solid #ccc;
 			cursor: pointer;
-			padding: 15px 8px 15px 15px;
-			border-right: 7px solid transparent;
+			padding: 15px 11px 15px 18px;
+			border-right: 9px solid transparent;
 			text-decoration: none;
 			
 			&.active {
@@ -50,10 +50,10 @@
 			}
 			
 			&.has_unread {
-				border-right: 7px solid #ccc;
+				border-right: 9px solid #ccc;
 				
 				&.online {
-					border-right: 7px solid $green;
+					border-right: 9px solid $green;
 				}
 			}
 
@@ -68,13 +68,15 @@
 					font-weight: bold;
 					margin-bottom: 3px;
 					color: #444;
-					font-size: 19px;
+					font-size: 22px;
+					line-height: 34px;
 					margin: 0;
 				}
 				
 				&.last_seen {
 					float: left;
-					font-size: 14px;
+					font-size: 16px;
+					line-height: 16px;
 					color: #999;
 					margin: 0;
 				}
@@ -82,9 +84,9 @@
 				&.icons {
 					float: right;
 					text-align: right;
-					margin: -3px 0 -2px;
+					margin: 0px 0 -2px;
 					color: #444;
-					font-size: 19px;
+					font-size: 18px;
 				}
 			}
 		}

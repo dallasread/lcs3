@@ -27,7 +27,7 @@
 		}
 		
 		&.admin_settings_loading {
-			top: $topbar_height + $tabs_nav_height;
+			top: $topbar_height + $tabs_nav_height + 15;
 			right: 0;
 			bottom: 0;
 			left: $leftbar_width;

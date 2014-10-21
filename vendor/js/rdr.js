@@ -5351,6 +5351,9 @@ RDR = (function(_super) {
     for (index = _i = 0, _len = controllers.length; _i < _len; index = ++_i) {
       c = controllers[index];
       path = this.pathForSegments(controllers, false, controllers.length - index);
+      if (path === "/") {
+        path = "/application";
+      }
       this.Log("Controllers", "Fetching: " + path);
       if (path in this.Controllers && "init" in this.Controllers[path]) {
         initializers.push(path);
@@ -5571,6 +5574,38 @@ RDR = (function(_super) {
       i++;
     }
     return obj[pList[len - 1]] = value;
+  };
+
+  return _Class;
+
+})(RDR);
+
+RDR = (function(_super) {
+  __extends(_Class, _super);
+
+  function _Class() {
+    return _Class.__super__.constructor.apply(this, arguments);
+  }
+
+  _Class.prototype.executeEvent = function(element) {
+    var action, found, r;
+    r = this;
+    found = false;
+    action = element.attr("data-rdr-bind-action");
+    element.parents(".rdr-template").each(function() {
+      var path;
+      path = $(this).attr("data-path");
+      r.Log("Actions", "Fetching Path: " + path);
+      if (path in r.Controllers && "actions" in r.Controllers[path] && action in r.Controllers[path]["actions"]) {
+        found = true;
+        r.Controllers[path]["actions"][action](element);
+        r.Log("Actions", "Path Found: " + path);
+        return false;
+      }
+    });
+    if (!found) {
+      return r.Log("Actions", "No Action Found: " + action);
+    }
   };
 
   return _Class;
@@ -5973,23 +6008,12 @@ RDR = (function(_super) {
       });
       return false;
     });
+    $(this.Config.container).on("click", "[data-rdr-bind-event='click']", function() {
+      r.executeEvent($(this));
+      return false;
+    });
     return $(this.Config.container).on("submit", "[data-rdr-bind-event='submit']", function() {
-      var event, form, found, path;
-      form = $(this);
-      path = "";
-      found = false;
-      event = $(this).attr("data-rdr-bind-action");
-      $(this).parents(".rdr-template").each(function() {
-        path = $(this).attr("data-path");
-        if (path in r.Controllers && "actions" in r.Controllers[path] && event in r.Controllers[path]["actions"]) {
-          found = true;
-          r.Controllers[path]["actions"][event](form);
-          return false;
-        }
-      });
-      if (!found) {
-        r.Log("Events", "No Function Found: " + event);
-      }
+      r.executeEvent($(this));
       return false;
     });
   };

@@ -5352,6 +5352,9 @@ RDR = (function(_super) {
     for (index = _i = 0, _len = controllers.length; _i < _len; index = ++_i) {
       c = controllers[index];
       path = this.pathForSegments(controllers, false, controllers.length - index);
+      if (path === "/") {
+        path = "/application";
+      }
       this.Log("Controllers", "Fetching: " + path);
       if (path in this.Controllers && "init" in this.Controllers[path]) {
         initializers.push(path);
@@ -5572,6 +5575,38 @@ RDR = (function(_super) {
       i++;
     }
     return obj[pList[len - 1]] = value;
+  };
+
+  return _Class;
+
+})(RDR);
+
+RDR = (function(_super) {
+  __extends(_Class, _super);
+
+  function _Class() {
+    return _Class.__super__.constructor.apply(this, arguments);
+  }
+
+  _Class.prototype.executeEvent = function(element) {
+    var action, found, r;
+    r = this;
+    found = false;
+    action = element.attr("data-rdr-bind-action");
+    element.parents(".rdr-template").each(function() {
+      var path;
+      path = $(this).attr("data-path");
+      r.Log("Actions", "Fetching Path: " + path);
+      if (path in r.Controllers && "actions" in r.Controllers[path] && action in r.Controllers[path]["actions"]) {
+        found = true;
+        r.Controllers[path]["actions"][action](element);
+        r.Log("Actions", "Path Found: " + path);
+        return false;
+      }
+    });
+    if (!found) {
+      return r.Log("Actions", "No Action Found: " + action);
+    }
   };
 
   return _Class;
@@ -5974,23 +6009,12 @@ RDR = (function(_super) {
       });
       return false;
     });
+    $(this.Config.container).on("click", "[data-rdr-bind-event='click']", function() {
+      r.executeEvent($(this));
+      return false;
+    });
     return $(this.Config.container).on("submit", "[data-rdr-bind-event='submit']", function() {
-      var event, form, found, path;
-      form = $(this);
-      path = "";
-      found = false;
-      event = $(this).attr("data-rdr-bind-action");
-      $(this).parents(".rdr-template").each(function() {
-        path = $(this).attr("data-path");
-        if (path in r.Controllers && "actions" in r.Controllers[path] && event in r.Controllers[path]["actions"]) {
-          found = true;
-          r.Controllers[path]["actions"][event](form);
-          return false;
-        }
-      });
-      if (!found) {
-        r.Log("Events", "No Function Found: " + event);
-      }
+      r.executeEvent($(this));
       return false;
     });
   };
@@ -8514,10 +8538,14 @@ this["RDR"]["prototype"] = this["RDR"]["prototype"] || {};
 this["RDR"]["prototype"]["Templates"] = this["RDR"]["prototype"]["Templates"] || {};
 
 this["RDR"]["prototype"]["Templates"]["/admin"] = Handlebars.template({"compiler":[6,">= 2.0.0-beta.1"],"main":function(depth0,helpers,partials,data) {
-  var stack1, helper, lambda=this.lambda, functionType="function", helperMissing=helpers.helperMissing, buffer = "<div class=\"admin\">\n<div class=\"topbar\">\n<div class=\"menu_wrapper\">\n<!--<p class=\"fa fa-bars open_menu icon\"></p>-->\n</div>\n<h1>";
+  var stack1, helper, lambda=this.lambda, helperMissing=helpers.helperMissing, escapeExpression=this.escapeExpression, functionType="function", buffer = "<div class=\"admin\">\n<div class=\"topbar\">\n<div class=\"menu_wrapper\">\n<!--<p class=\"fa fa-bars open_menu icon\"></p>-->\n</div>\n<h1>";
   stack1 = lambda(((stack1 = (depth0 != null ? depth0.settings : depth0)) != null ? stack1.name : stack1), depth0);
   if (stack1 != null) { buffer += stack1; }
-  buffer += "</h1>\n<a href=\"#/\" class=\"close icon\">&times;</a>\n</div>\n\n<div class=\"leftbar\">\n<a href=\"#\" class=\"toggle_status offline\">\n<i class=\"fa fa-toggle-on\"></i>\n<i class=\"fa fa-toggle-off\"></i>\n<span class=\"toggle-on\">Online</span>\n<span class=\"toggle-off\">Offline</span>\n</a>\n\n<a href=\"#/admin/visitors\">\n<i class=\"fa fa-comments icon\"></i>\nConvos\n</a>\n\n<a href=\"#/admin/agents\">\n<i class=\"fa fa-group icon\"></i>\nAgents\n</a>\n\n<a href=\"#/admin/settings\">\n<i class=\"fa fa-cog icon\"></i>\nSettings\n</a>\n\n<a href=\"#/admin/upgrade\">\n<!-- hide_if_upgraded hide_unless_admin -->\n<i class=\"fa fa-bolt icon\"></i>\nUpgrade\n</a>\n</div>\n\n<div class=\"panes\">\n";
+  buffer += "</h1>\n<a href=\"#/\" class=\"close icon\">&times;</a>\n</div>\n\n<div class=\"leftbar\">\n<a class=\"toggle_status offline\" "
+    + escapeExpression(((helpers.action || (depth0 && depth0.action) || helperMissing).call(depth0, {"name":"action","hash":{
+    'click': ("toggleStatus")
+  },"data":data})))
+    + ">\n<span class=\"toggle-on\">\n<i class=\"fa fa-toggle-on\"></i>\nOnline\n</span>\n<span class=\"toggle-off\">\n<i class=\"fa fa-toggle-on\"></i>\nOffline\n</span>\n</a>\n\n<a href=\"#/admin/visitors\">\n<i class=\"fa fa-comments icon\"></i>\nConvos\n</a>\n\n<a href=\"#/admin/agents\">\n<i class=\"fa fa-group icon\"></i>\nAgents\n</a>\n\n<a href=\"#/admin/settings\">\n<i class=\"fa fa-cog icon\"></i>\nSettings\n</a>\n\n<a href=\"#/admin/upgrade\">\n<!-- hide_if_upgraded hide_unless_admin -->\n<i class=\"fa fa-bolt icon\"></i>\nUpgrade\n</a>\n</div>\n\n<div class=\"panes\">\n";
   stack1 = ((helper = (helper = helpers.outlet || (depth0 != null ? depth0.outlet : depth0)) != null ? helper : helperMissing),(typeof helper === functionType ? helper.call(depth0, {"name":"outlet","hash":{},"data":data}) : helper));
   if (stack1 != null) { buffer += stack1; }
   return buffer + "\n</div>\n\n</div>\n";
@@ -8679,7 +8707,13 @@ this["RDR"]["prototype"]["Templates"]["/admin/upgrade"] = Handlebars.template({"
 
 
 this["RDR"]["prototype"]["Templates"]["/admin/visitors"] = Handlebars.template({"1":function(depth0,helpers,partials,data) {
-  var stack1, helper, functionType="function", helperMissing=helpers.helperMissing, buffer = "<a href=\"#/admin/visitors/visitor\" . class=\"visitor\">\n<!-- classNameBindings=\"";
+  var stack1, helper, functionType="function", helperMissing=helpers.helperMissing, buffer = "<a href=\"#/admin/visitors/visitor\" class=\"visitor ";
+  stack1 = helpers['if'].call(depth0, (depth0 != null ? depth0.online : depth0), {"name":"if","hash":{},"fn":this.program(2, data),"inverse":this.noop,"data":data});
+  if (stack1 != null) { buffer += stack1; }
+  buffer += " ";
+  stack1 = helpers['if'].call(depth0, (depth0 != null ? depth0.has_unread : depth0), {"name":"if","hash":{},"fn":this.program(4, data),"inverse":this.noop,"data":data});
+  if (stack1 != null) { buffer += stack1; }
+  buffer += "\">\n<!-- classNameBindings=\"";
   stack1 = helpers['if'].call(depth0, (depth0 != null ? depth0.online : depth0), {"name":"if","hash":{},"fn":this.program(2, data),"inverse":this.noop,"data":data});
   if (stack1 != null) { buffer += stack1; }
   buffer += " ";
@@ -8824,7 +8858,7 @@ Lively.Routes = {
   "/chatbox": true,
   "/admin": {
     "/visitors": {
-      "/:vistor_id": "visitor"
+      "/visitor": "visitor"
     },
     "/agents": true,
     "/upgrade": true,
@@ -8850,16 +8884,19 @@ Lively.Initializers.push(function() {
 
 Lively.Controllers["/admin"] = {
   init: function() {
-    return Lively.find("chatbox", {
+    Lively.find("chatbox", {
       id: Lively.glob["chatbox"]
     }, "settings");
+    return $("body").addClass("lcs-fixed");
   },
-  actions: function() {
-    return {
-      closeAdmin: function() {
-        return Lively.fetchPath("/");
-      }
-    };
+  actions: {
+    closeAdmin: function() {
+      return Lively.fetchPath("/");
+    },
+    toggleStatus: function() {
+      $(".toggle_status").toggleClass("offline");
+      return $(".toggle_status").toggleClass("online");
+    }
   }
 };
 
@@ -8921,17 +8958,13 @@ Lively.Controllers["/admin/visitors"] = {
 };
 
 Lively.Controllers["/application"] = {
+  init: function() {
+    return $("body").removeClass("lcs-fixed");
+  },
   actions: {
     saveAttrs: function(form) {
       return form.trigger("saveAttrs");
     }
-  }
-};
-
-Lively.Controllers["/chatbox"] = {
-  vars: {},
-  init: function() {
-    return false;
   }
 };
 

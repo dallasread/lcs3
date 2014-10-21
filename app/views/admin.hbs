@@ -8,11 +8,15 @@
 	</div>
 
 	<div class="leftbar">
-		<a href="#" class="toggle_status offline">
-			<i class="fa fa-toggle-on"></i>
-			<i class="fa fa-toggle-off"></i>
-			<span class="toggle-on">Online</span>
-			<span class="toggle-off">Offline</span>
+		<a class="toggle_status offline" {{action click="toggleStatus"}}>
+			<span class="toggle-on">
+				<i class="fa fa-toggle-on"></i>
+				Online
+			</span>
+			<span class="toggle-off">
+				<i class="fa fa-toggle-on"></i>
+				Offline
+			</span>
 		</a>
 
 		<a href="#/admin/visitors">

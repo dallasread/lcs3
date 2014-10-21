@@ -5,7 +5,7 @@
 	<div class="visitors">
 		
 		{{#each visitors}}
-			<a href="#/admin/visitors/visitor" . class="visitor">
+			<a href="#/admin/visitors/visitor" class="visitor {{#if online}}online{{/if}} {{#if has_unread}}has_unread{{/if}}">
 				<!-- classNameBindings="{{#if online}}online{{/if}} {{#if has_unread}}has_unread{{/if}}" -->
 				<span class="name">
 					<span {{!bind-attr title=email}}>{{{ name }}}</span>
