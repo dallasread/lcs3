@@ -17,7 +17,7 @@
 				</td>
 				<td><input type="text" {{bind-attr value="body" path=_path}}></td>
 				<td class="align_right">
-					<button class="fluid_width small gray red_hover">
+					<button class="fluid_width small gray red_hover" {{action click="delete" path=_path}}>
 						<i class="fa fa-trash"></i>
 					</button>
 				</td>
@@ -27,5 +27,5 @@
 </table>
 
 <div class="upper_space">
-	<button>Add Canned Message</button>
+	<button {{action click="create"}}>Add Canned Message</button>
 </div>

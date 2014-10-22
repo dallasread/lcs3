@@ -5416,11 +5416,8 @@ RDR = (function(_super) {
         this.DS.child(path).on("child_added", function(snapshot) {
           return r.updateLocalVar("" + variable + "/" + (snapshot.name()), snapshot.val());
         });
-        this.DS.child(path).on("child_changed", function(snapshot) {
-          return r.updateLocalVar("" + variable + "/" + (snapshot.name()), snapshot.val());
-        });
         this.DS.child(path).on("child_removed", function(snapshot) {
-          return r.updateLocalVar("" + variable + "/" + (snapshot.name()), snapshot.val());
+          return r.deleteLocalVar("" + variable + "/" + (snapshot.name()));
         });
         this.DSListeners.push(path);
         this.Debug("Listeners", "Added: " + path);
@@ -5429,44 +5426,75 @@ RDR = (function(_super) {
     }
   };
 
-  _Class.prototype.save = function(attrs) {
-    var k, path, r, v, variable, _results;
+  _Class.prototype.deletebyPath = function(path) {
+    var r;
     r = this;
-    _results = [];
-    for (k in attrs) {
-      v = attrs[k];
-      variable = k.split("/")[0];
-      path = this.varChart[variable];
-      if (typeof path !== "undefined") {
-        path = "" + path + (k.split(variable)[1]);
-        _results.push(r.DS.child(path).set(v, function(error) {
-          if (!error) {
-            r.vars[k.replace(/\//, ".")] = v;
-            r.synchronousVars[k.replace(/\//, ".")] = v;
-            return r.Log("Vars", "Saved: " + path);
-          } else {
-            r.Warn("Vars", "Permission Denied: " + v);
-            return r.DS.child(path).once("value", function(snapshot) {
-              var value;
-              value = snapshot.val();
-              $("[data-rdr-bind-html='" + k + "']").html(value);
-              return $("[data-rdr-bind-key='" + k + "']").each(function() {
-                var attr;
-                attr = $(this).attr("data-rdr-bind-attr");
-                if (attr === "value") {
-                  return $(this).val(value);
-                } else {
-                  return $(this).attr(attr, value);
-                }
-              });
-            });
-          }
-        }));
-      } else {
-        _results.push(r.Warn("Vars", "Unable to Save: " + k));
-      }
+    return this.DS.child(path).remove(function(error) {
+      return r.DSCallback("delete", path, false, error);
+    });
+  };
+
+  _Class.prototype.varPathToDSPath = function(path) {
+    var base_path, variable;
+    variable = path.split("/")[0];
+    base_path = this.varChart[variable];
+    if (typeof path !== "undefined") {
+      return "" + base_path + (path.split(variable)[1]);
+    } else {
+      return false;
     }
-    return _results;
+  };
+
+  _Class.prototype["delete"] = function(data) {
+    var path;
+    path = this.varPathToDSPath(data._path);
+    if (path) {
+      return this.deletebyPath(path);
+    }
+  };
+
+  _Class.prototype.create = function(key, value) {
+    var path, r;
+    path = this.varPathToDSPath(key);
+    if (path) {
+      r = this;
+      return this.DS.child(path).push(value, function(error) {
+        return r.DSCallback("update", path, value, error);
+      });
+    } else {
+      return this.Warn("Vars", "Bad Path: " + key);
+    }
+  };
+
+  _Class.prototype.update = function(key, value) {
+    var path, r;
+    path = this.varPathToDSPath(key);
+    if (path) {
+      r = this;
+      return this.DS.child(path).set(value, function(error) {
+        return r.DSCallback("update", path, value, error);
+      });
+    } else {
+      return this.Warn("Vars", "Bad Path: " + key);
+    }
+  };
+
+  _Class.prototype.capitalize = function(str) {
+    return ("" + str).charAt(0).toUpperCase() + ("" + str).slice(1);
+  };
+
+  _Class.prototype.DSCallback = function(action, path, value, error) {
+    var r;
+    r = this;
+    if (!error) {
+      this.setLocalVarByPath(this.vars, path, value);
+      return this.Log("DS", "" + (this.capitalize(action)) + "d: " + path);
+    } else {
+      this.Warn("DS", "" + this.capitalize + " Failed: " + value);
+      return this.DS.child(path).once("value", function(snapshot) {
+        return r.updateView(key, value);
+      });
+    }
   };
 
   return _Class;
@@ -5480,8 +5508,11 @@ RDR = (function(_super) {
     return _Class.__super__.constructor.apply(this, arguments);
   }
 
-  _Class.prototype.executeEvent = function(element) {
+  _Class.prototype.executeEvent = function(element, data) {
     var action, found, r;
+    if (data == null) {
+      data = {};
+    }
     r = this;
     found = false;
     action = element.attr("data-rdr-bind-action");
@@ -5491,7 +5522,7 @@ RDR = (function(_super) {
       r.Log("Actions", "Fetching Path: " + path);
       if (path in r.Controllers && "actions" in r.Controllers[path] && action in r.Controllers[path]["actions"]) {
         found = true;
-        r.Controllers[path]["actions"][action](element);
+        r.Controllers[path]["actions"][action](element, data);
         r.Log("Actions", "Path Found: " + path);
         return false;
       }
@@ -5499,6 +5530,35 @@ RDR = (function(_super) {
     if (!found) {
       return r.Log("Actions", "No Action Found: " + action);
     }
+  };
+
+  _Class.prototype.Events = function() {
+    var r;
+    r = this;
+    $(this.Config.container).on("saveAttrs", "form", function() {
+      $(this).find("[data-rdr-bind-key]").each(function() {
+        return r.update($(this).attr("data-rdr-bind-key"), $(this).val());
+      });
+      return false;
+    });
+    $(this.Config.container).on("blur", "[data-rdr-bind-event='blur']", function() {
+      r.update($(this).attr("data-rdr-bind-key"), $(this).val());
+      return false;
+    });
+    $(this.Config.container).on("click", "[data-rdr-bind-event='click']", function() {
+      var data, path;
+      data = {};
+      path = $(this).attr("data-rdr-bind-key");
+      if (path) {
+        data = r.getLocalVarByPath(path);
+      }
+      r.executeEvent($(this), data);
+      return false;
+    });
+    return $(this.Config.container).on("submit", "[data-rdr-bind-event='submit']", function() {
+      r.executeEvent($(this));
+      return false;
+    });
   };
 
   return _Class;
@@ -5516,46 +5576,61 @@ RDR = (function(_super) {
     return ("" + str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
   };
 
+  _Class.prototype.extractPath = function(options) {
+    var in_loop, path;
+    in_loop = false;
+    path = "";
+    if ("path" in options.hash) {
+      in_loop = true;
+      path = $(options.hash.path).attr("data-rdr-bind-html");
+      path = path.replace(/\/(_path|delete)/, "");
+    }
+    return [in_loop, path];
+  };
+
   _Class.prototype.handlebarsHelpers = function() {
     var r;
     r = this;
     Handlebars.registerHelper("bind-attr", function(options) {
-      var attr, attrs, in_loop, key, path, value, _ref;
-      in_loop = false;
+      var attr, attrs, in_loop, key, path, value, _ref, _ref1;
       attrs = "";
-      path = "";
-      if ("path" in options.hash) {
-        in_loop = true;
-        path = $(options.hash.path).attr("data-rdr-bind-html").replace("/_path", "");
-      }
+      _ref = r.extractPath(options), in_loop = _ref[0], path = _ref[1];
       if (!("event" in options.hash)) {
         options.hash.event = "blur";
       }
-      _ref = options.hash;
-      for (attr in _ref) {
-        key = _ref[attr];
-        if (attr === "event") {
-          attrs += "data-rdr-bind-" + attr + "=\"" + key + "\" ";
-        } else if (attr !== "path") {
-          if (in_loop) {
-            key = "" + path + "/" + key;
+      _ref1 = options.hash;
+      for (attr in _ref1) {
+        key = _ref1[attr];
+        if (attr !== "path") {
+          if (attr === "event") {
+            attrs += "data-rdr-bind-" + attr + "=\"" + key + "\" ";
+          } else {
+            if (in_loop) {
+              key = "" + path + "/" + key;
+            }
+            attrs += "data-rdr-bind-attr=\"" + attr + "\" ";
+            attrs += "data-rdr-bind-key=\"" + key + "\" ";
+            value = r.escapeQuotes(r.getLocalVarByPath(key));
+            attrs += "" + attr + "=\"" + value + "\"";
           }
-          attrs += "data-rdr-bind-attr=\"" + attr + "\" ";
-          attrs += "data-rdr-bind-key=\"" + key + "\" ";
-          value = r.escapeQuotes(r.getLocalVarByPath(key));
-          attrs += "" + attr + "=\"" + value + "\"";
         }
       }
       return new Handlebars.SafeString(attrs);
     });
     return Handlebars.registerHelper("action", function(options) {
-      var attrs, k, v, _ref;
+      var attr, attrs, in_loop, key, path, _ref, _ref1;
       attrs = "";
-      _ref = options.hash;
-      for (k in _ref) {
-        v = _ref[k];
-        attrs += "data-rdr-bind-event=\"" + k + "\" ";
-        attrs += "data-rdr-bind-action=\"" + v + "\"";
+      _ref = r.extractPath(options), in_loop = _ref[0], path = _ref[1];
+      if (in_loop) {
+        attrs += "data-rdr-bind-key=\"" + path + "\" ";
+      }
+      _ref1 = options.hash;
+      for (attr in _ref1) {
+        key = _ref1[attr];
+        if (attr !== "path") {
+          attrs += "data-rdr-bind-event=\"" + attr + "\" ";
+          attrs += "data-rdr-bind-action=\"" + key + "\"";
+        }
       }
       return new Handlebars.SafeString(attrs);
     });
@@ -5754,12 +5829,9 @@ RDR = (function(_super) {
         this.prepareVars(var_key, value, synchronous);
       } else {
         this.setLocalVarByPath(this.vars, var_key, value);
-        if (synchronous) {
-          value = "<span data-rdr-bind-html='" + var_key + "'>" + value + "</span>";
-          this.setLocalVarByPath(this.synchronousVars, var_key, value);
-        } else {
-          this.updateView(var_key, value);
-        }
+        this.updateView(var_key, value);
+        value = "<span data-rdr-bind-html='" + var_key + "'>" + value + "</span>";
+        this.setLocalVarByPath(this.synchronousVars, var_key, value);
       }
     }
     if (synchronous) {
@@ -5778,6 +5850,11 @@ RDR = (function(_super) {
     if (synchronous) {
       return synchronous.promise;
     }
+  };
+
+  _Class.prototype.deleteLocalVar = function(path) {
+    delete this.getLocalVarByPath(path);
+    return this.updateView(path);
   };
 
   _Class.prototype.getLocalVarByPath = function(path_str) {
@@ -5915,16 +5992,26 @@ RDR = (function(_super) {
   };
 
   _Class.prototype.updateView = function(key, value) {
-    $("[data-rdr-bind-html='" + key + "']").html(value);
-    return $("[data-rdr-bind-key='" + key + "']").each(function() {
-      var attr;
-      attr = $(this).attr("data-rdr-bind-attr");
-      if (attr === "value") {
-        return $(this).val(value);
-      } else {
-        return $(this).attr(attr, value);
-      }
-    });
+    if (value == null) {
+      value = false;
+    }
+    key = key.replace(/\//, ".");
+    if (!value) {
+
+    } else if ("ROW EXISTS") {
+      $("[data-rdr-bind-html='" + key + "']").html(value);
+      return $("[data-rdr-bind-key='" + key + "']").each(function() {
+        var attr;
+        attr = $(this).attr("data-rdr-bind-attr");
+        if (attr === "value") {
+          return $(this).val(value);
+        } else {
+          return $(this).attr(attr, value);
+        }
+      });
+    } else {
+
+    }
   };
 
   _Class.prototype.showLoading = function(segments, placer, html) {
@@ -6000,6 +6087,7 @@ RDR = (function(_super) {
     this.Log("Booter", "Booting");
     this.createApplicationView();
     this.DSConnect();
+    this.Events();
     FastClick.attach(document.body);
     if (/\#|hash/.test(this.Config.history)) {
       this.Log("Booter", "RDR History is Now: #");
@@ -6010,40 +6098,14 @@ RDR = (function(_super) {
       $(window).bind("hashchange", function() {
         return r.fetchPath(window.location.hash.replace(/\#/g, ""));
       });
-      $(window).trigger("hashchange");
+      return $(window).trigger("hashchange");
     } else {
       $(this.Config.container).on("click", "a[href^='#']", function() {
         r.fetchPath($(this).attr("href").replace(/\#/g, ""));
         return false;
       });
-      this.fetchPath(this.currentPath);
+      return this.fetchPath(this.currentPath);
     }
-    $(this.Config.container).on("saveAttrs", "form", function() {
-      $(this).find("[data-rdr-bind-key]").each(function() {
-        var attrs, path;
-        attrs = {};
-        path = $(this).attr("data-rdr-bind-key");
-        attrs[path] = $(this).val();
-        return r.save(attrs);
-      });
-      return false;
-    });
-    $(this.Config.container).on("blur", "[data-rdr-bind-event='blur']", function() {
-      var attrs, path, value;
-      attrs = {};
-      path = $(this).attr("data-rdr-bind-key");
-      value = attrs[path] = $(this).val();
-      r.save(attrs);
-      return false;
-    });
-    $(this.Config.container).on("click", "[data-rdr-bind-event='click']", function() {
-      r.executeEvent($(this));
-      return false;
-    });
-    return $(this.Config.container).on("submit", "[data-rdr-bind-event='submit']", function() {
-      r.executeEvent($(this));
-      return false;
-    });
   };
 
   return _Class;
