@@ -5425,49 +5425,48 @@ RDR = (function(_super) {
         this.DSListeners.push(path);
         this.Debug("Listeners", "Added: " + path);
       }
-      deferred.promise;
+      return deferred.promise;
     }
-    return {
-      save: function(attrs) {
-        var k, v, _results;
-        r = this;
-        _results = [];
-        for (k in attrs) {
-          v = attrs[k];
-          variable = k.split("/")[0];
-          path = this.varChart[variable];
-          if (typeof path !== "undefined") {
-            path = "" + path + (k.split(variable)[1]);
-            _results.push(r.DS.child(path).set(v, function(error) {
-              if (!error) {
-                r.vars[k.replace(/\//, ".")] = v;
-                r.synchronousVars[k.replace(/\//, ".")] = v;
-                return r.Log("Vars", "Saved: " + path);
-              } else {
-                r.Warn("Vars", "Permission Denied: " + v);
-                return r.DS.child(path).once("value", function(snapshot) {
-                  var value;
-                  value = snapshot.val();
-                  $("[data-rdr-bind-html='" + k + "']").html(value);
-                  return $("[data-rdr-bind-key='" + k + "']").each(function() {
-                    var attr;
-                    attr = $(this).attr("data-rdr-bind-attr");
-                    if (attr === "value") {
-                      return $(this).val(value);
-                    } else {
-                      return $(this).attr(attr, value);
-                    }
-                  });
-                });
-              }
-            }));
+  };
+
+  _Class.prototype.save = function(attrs) {
+    var k, path, r, v, variable, _results;
+    r = this;
+    _results = [];
+    for (k in attrs) {
+      v = attrs[k];
+      variable = k.split("/")[0];
+      path = this.varChart[variable];
+      if (typeof path !== "undefined") {
+        path = "" + path + (k.split(variable)[1]);
+        _results.push(r.DS.child(path).set(v, function(error) {
+          if (!error) {
+            r.vars[k.replace(/\//, ".")] = v;
+            r.synchronousVars[k.replace(/\//, ".")] = v;
+            return r.Log("Vars", "Saved: " + path);
           } else {
-            _results.push(r.Warn("Vars", "Unable to Save: " + k));
+            r.Warn("Vars", "Permission Denied: " + v);
+            return r.DS.child(path).once("value", function(snapshot) {
+              var value;
+              value = snapshot.val();
+              $("[data-rdr-bind-html='" + k + "']").html(value);
+              return $("[data-rdr-bind-key='" + k + "']").each(function() {
+                var attr;
+                attr = $(this).attr("data-rdr-bind-attr");
+                if (attr === "value") {
+                  return $(this).val(value);
+                } else {
+                  return $(this).attr(attr, value);
+                }
+              });
+            });
           }
-        }
-        return _results;
+        }));
+      } else {
+        _results.push(r.Warn("Vars", "Unable to Save: " + k));
       }
-    };
+    }
+    return _results;
   };
 
   return _Class;
@@ -5529,10 +5528,15 @@ RDR = (function(_super) {
         in_loop = true;
         path = $(options.hash.path).attr("data-rdr-bind-html").replace("/_path", "");
       }
+      if (!("event" in options.hash)) {
+        options.hash.event = "blur";
+      }
       _ref = options.hash;
       for (attr in _ref) {
         key = _ref[attr];
-        if (attr !== "path") {
+        if (attr === "event") {
+          attrs += "data-rdr-bind-" + attr + "=\"" + key + "\" ";
+        } else if (attr !== "path") {
           if (in_loop) {
             key = "" + path + "/" + key;
           }
@@ -6016,13 +6020,20 @@ RDR = (function(_super) {
     }
     $(this.Config.container).on("saveAttrs", "form", function() {
       $(this).find("[data-rdr-bind-key]").each(function() {
-        var attrs, path, value;
+        var attrs, path;
         attrs = {};
         path = $(this).attr("data-rdr-bind-key");
-        value = $(this).val();
-        attrs[path] = value;
+        attrs[path] = $(this).val();
         return r.save(attrs);
       });
+      return false;
+    });
+    $(this.Config.container).on("blur", "[data-rdr-bind-event='blur']", function() {
+      var attrs, path, value;
+      attrs = {};
+      path = $(this).attr("data-rdr-bind-key");
+      value = attrs[path] = $(this).val();
+      r.save(attrs);
       return false;
     });
     $(this.Config.container).on("click", "[data-rdr-bind-event='click']", function() {
