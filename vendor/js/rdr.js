@@ -5413,11 +5413,12 @@ RDR = (function(_super) {
         this.DS.child(path).once("value", function(snapshot) {
           return r.updateLocalVar(variable, snapshot.val(), deferred);
         });
-        this.DS.child(path).on("child_added", function(snapshot) {
+        this.DS.child(path).on("child_changed", function(snapshot) {
           return r.updateLocalVar("" + variable + "/" + (snapshot.name()), snapshot.val());
         });
         this.DS.child(path).on("child_removed", function(snapshot) {
-          return r.deleteLocalVar("" + variable + "/" + (snapshot.name()));
+          path = "" + variable + "/" + (snapshot.name());
+          return r.deleteLocalVar(path);
         });
         this.DSListeners.push(path);
         this.Debug("Listeners", "Added: " + path);
@@ -5426,11 +5427,11 @@ RDR = (function(_super) {
     }
   };
 
-  _Class.prototype.deletebyPath = function(path) {
+  _Class.prototype.deletebyPath = function(ds_path) {
     var r;
     r = this;
-    return this.DS.child(path).remove(function(error) {
-      return r.DSCallback("delete", path, false, error);
+    return this.DS.child(ds_path).remove(function(error) {
+      return r.DSCallback("delete", ds_path, false, error);
     });
   };
 
@@ -5446,10 +5447,10 @@ RDR = (function(_super) {
   };
 
   _Class.prototype["delete"] = function(data) {
-    var path;
-    path = this.varPathToDSPath(data._path);
-    if (path) {
-      return this.deletebyPath(path);
+    var ds_path;
+    ds_path = this.varPathToDSPath(data._path);
+    if (ds_path) {
+      return this.deletebyPath(ds_path);
     }
   };
 
@@ -5458,8 +5459,8 @@ RDR = (function(_super) {
     path = this.varPathToDSPath(key);
     if (path) {
       r = this;
-      return this.DS.child(path).push(value, function(error) {
-        return r.DSCallback("update", path, value, error);
+      return this.lastCreate = this.DS.child(path).push(value, function(error) {
+        return r.DSCallback("create", key, value, error);
       });
     } else {
       return this.Warn("Vars", "Bad Path: " + key);
@@ -5472,7 +5473,7 @@ RDR = (function(_super) {
     if (path) {
       r = this;
       return this.DS.child(path).set(value, function(error) {
-        return r.DSCallback("update", path, value, error);
+        return r.DSCallback("update", key, value, error);
       });
     } else {
       return this.Warn("Vars", "Bad Path: " + key);
@@ -5487,12 +5488,11 @@ RDR = (function(_super) {
     var r;
     r = this;
     if (!error) {
-      this.setLocalVarByPath(this.vars, path, value);
       return this.Log("DS", "" + (this.capitalize(action)) + "d: " + path);
     } else {
       this.Warn("DS", "" + this.capitalize + " Failed: " + value);
       return this.DS.child(path).once("value", function(snapshot) {
-        return r.updateView(key, value);
+        return r.updateView(path, value);
       });
     }
   };
@@ -5835,6 +5835,7 @@ RDR = (function(_super) {
       }
     }
     if (synchronous) {
+      synchronous.resolve();
       return this.synchronousVars;
     } else {
       return this.vars;
@@ -5852,17 +5853,39 @@ RDR = (function(_super) {
     }
   };
 
-  _Class.prototype.deleteLocalVar = function(path) {
-    delete this.getLocalVarByPath(path);
-    return this.updateView(path);
+  _Class.prototype.deleteLocalVarByPath = function(path) {
+    path = path.replace(/\//g, ".");
+    path = this.getLocalVarByPath(path);
+    return this.deleteLocalVar(path);
   };
 
-  _Class.prototype.getLocalVarByPath = function(path_str) {
+  _Class.prototype.deleteLocalVar = function(path_str) {
+    var d, p, _i, _len, _ref;
+    path_str = path_str.replace(/\//g, ".");
+    d = "delete this.vars";
+    _ref = path_str.split(".");
+    for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+      p = _ref[_i];
+      d += "[\"" + p + "\"]";
+    }
+    eval(d);
+    eval(d.replace("this.vars", "this.synchronousVars"));
+    return this.updateView(path_str);
+  };
+
+  _Class.prototype.getLocalVarByPath = function(path_str, clone) {
     var o, p, path, vars, _i, _len;
+    if (clone == null) {
+      clone = true;
+    }
     o = "";
     path_str = path_str.replace(/\//g, ".");
     path = path_str.split(".");
-    vars = $.extend({}, this.vars);
+    if (clone) {
+      vars = $.extend({}, this.vars);
+    } else {
+      vars = this.vars;
+    }
     for (_i = 0, _len = path.length; _i < _len; _i++) {
       p = path[_i];
       if (p in vars) {
@@ -5995,7 +6018,7 @@ RDR = (function(_super) {
     if (value == null) {
       value = false;
     }
-    key = key.replace(/\//, ".");
+    key = ("" + key).replace(/\//, ".");
     if (!value) {
 
     } else if ("ROW EXISTS") {
