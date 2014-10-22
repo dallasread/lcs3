@@ -5589,6 +5589,16 @@ RDR = (function(_super) {
     return [in_loop, path];
   };
 
+  _Class.prototype.singularize = function(str) {
+    if (("" + str).slice(-3) === "ies") {
+      return "" + (("" + str).slice(-3)) + "y";
+    } else if (("" + str).slice(-1) === "s") {
+      return ("" + str).slice(-1);
+    } else {
+      return str;
+    }
+  };
+
   _Class.prototype.handlebarsHelpers = function() {
     var r;
     r = this;
@@ -5618,7 +5628,7 @@ RDR = (function(_super) {
       }
       return new Handlebars.SafeString(attrs);
     });
-    return Handlebars.registerHelper("action", function(options) {
+    Handlebars.registerHelper("action", function(options) {
       var attr, attrs, in_loop, key, path, _ref, _ref1;
       attrs = "";
       _ref = r.extractPath(options), in_loop = _ref[0], path = _ref[1];
@@ -5634,6 +5644,29 @@ RDR = (function(_super) {
         }
       }
       return new Handlebars.SafeString(attrs);
+    });
+    return Handlebars.registerHelper("render", function(variable, options) {
+      var collection, first, k, output, path, template, v;
+      output = "";
+      template = false;
+      collection = r.vars[variable];
+      if (typeof template !== "string") {
+        first = collection[Object.keys(collection)[0]];
+        if (typeof first !== "undefined") {
+          path = r.singularize(first._parent_key);
+        }
+        path = r.singularize(variable);
+        template = "/partials/" + path;
+      }
+      if (template in r.Templates) {
+        for (k in collection) {
+          v = collection[k];
+          output += "<tr><td>awesome</td></tr>";
+        }
+      } else {
+        r.Warn("Handlebars", "Partial Not Found: " + template);
+      }
+      return new Handlebars.SafeString(output);
     });
   };
 
@@ -8704,29 +8737,11 @@ this["RDR"]["prototype"]["Templates"]["/admin/settings"] = Handlebars.template({
 
 
 
-this["RDR"]["prototype"]["Templates"]["/admin/settings/canned"] = Handlebars.template({"1":function(depth0,helpers,partials,data) {
+this["RDR"]["prototype"]["Templates"]["/admin/settings/canned"] = Handlebars.template({"compiler":[6,">= 2.0.0-beta.1"],"main":function(depth0,helpers,partials,data) {
   var helperMissing=helpers.helperMissing, escapeExpression=this.escapeExpression;
-  return "<tr>\n<td class=\"header_column align_center\">\n<span class=\"canned_hash\">#</span>\n<input type=\"text\" "
-    + escapeExpression(((helpers['bind-attr'] || (depth0 && depth0['bind-attr']) || helperMissing).call(depth0, {"name":"bind-attr","hash":{
-    'path': ((depth0 != null ? depth0._path : depth0)),
-    'value': ("hash")
-  },"data":data})))
-    + " class=\"has_canned_hash\">\n</td>\n<td><input type=\"text\" "
-    + escapeExpression(((helpers['bind-attr'] || (depth0 && depth0['bind-attr']) || helperMissing).call(depth0, {"name":"bind-attr","hash":{
-    'path': ((depth0 != null ? depth0._path : depth0)),
-    'value': ("body")
-  },"data":data})))
-    + "></td>\n<td class=\"align_right\">\n<button class=\"fluid_width small gray red_hover\" "
-    + escapeExpression(((helpers.action || (depth0 && depth0.action) || helperMissing).call(depth0, {"name":"action","hash":{
-    'path': ((depth0 != null ? depth0._path : depth0)),
-    'click': ("delete")
-  },"data":data})))
-    + ">\n<i class=\"fa fa-trash\"></i>\n</button>\n</td>\n</tr>\n";
-},"compiler":[6,">= 2.0.0-beta.1"],"main":function(depth0,helpers,partials,data) {
-  var stack1, helperMissing=helpers.helperMissing, escapeExpression=this.escapeExpression, buffer = "<p>Canned are the things that go crazy and crazier. Triggers are the things that go crazy and crazier. Triggers are the things that go crazy and crazier.</p>\n\n<table class=\"table\">\n<thead>\n<tr>\n<th style=\"width: 19%; \" class=\"align_center\">Shortcut</th>\n<th style=\"width: 71%; \">Message</th>\n<th style=\"width: 10%; \"></th>\n</tr>\n</thead>\n<tbody>\n";
-  stack1 = helpers.each.call(depth0, (depth0 != null ? depth0.canned : depth0), {"name":"each","hash":{},"fn":this.program(1, data),"inverse":this.noop,"data":data});
-  if (stack1 != null) { buffer += stack1; }
-  return buffer + "</tbody>\n</table>\n\n<div class=\"upper_space\">\n<button "
+  return "<p>Canned are the things that go crazy and crazier. Triggers are the things that go crazy and crazier. Triggers are the things that go crazy and crazier.</p>\n\n<table class=\"table\">\n<thead>\n<tr>\n<th style=\"width: 19%; \" class=\"align_center\">Shortcut</th>\n<th style=\"width: 71%; \">Message</th>\n<th style=\"width: 10%; \"></th>\n</tr>\n</thead>\n<tbody>\n"
+    + escapeExpression(((helpers.render || (depth0 && depth0.render) || helperMissing).call(depth0, "canned", {"name":"render","hash":{},"data":data})))
+    + "\n</tbody>\n</table>\n\n<div class=\"upper_space\">\n<button "
     + escapeExpression(((helpers.action || (depth0 && depth0.action) || helperMissing).call(depth0, {"name":"action","hash":{
     'click': ("create")
   },"data":data})))
@@ -8972,6 +8987,28 @@ this["RDR"]["prototype"]["Templates"]["/chatbox"] = Handlebars.template({"1":fun
 this["RDR"]["prototype"]["Templates"]["/loading"] = Handlebars.template({"compiler":[6,">= 2.0.0-beta.1"],"main":function(depth0,helpers,partials,data) {
   return "<div class=\"application_loading loading\"></div>\n";
   },"useData":true});
+
+
+
+this["RDR"]["prototype"]["Templates"]["/partials/canned"] = Handlebars.template({"compiler":[6,">= 2.0.0-beta.1"],"main":function(depth0,helpers,partials,data) {
+  var helperMissing=helpers.helperMissing, escapeExpression=this.escapeExpression;
+  return "<tr>\n<td class=\"header_column align_center\">\n<span class=\"canned_hash\">#</span>\n<input type=\"text\" "
+    + escapeExpression(((helpers['bind-attr'] || (depth0 && depth0['bind-attr']) || helperMissing).call(depth0, {"name":"bind-attr","hash":{
+    'path': ((depth0 != null ? depth0._path : depth0)),
+    'value': ("hash")
+  },"data":data})))
+    + " class=\"has_canned_hash\">\n</td>\n<td><input type=\"text\" "
+    + escapeExpression(((helpers['bind-attr'] || (depth0 && depth0['bind-attr']) || helperMissing).call(depth0, {"name":"bind-attr","hash":{
+    'path': ((depth0 != null ? depth0._path : depth0)),
+    'value': ("body")
+  },"data":data})))
+    + "></td>\n<td class=\"align_right\">\n<button class=\"fluid_width small gray red_hover\" "
+    + escapeExpression(((helpers.action || (depth0 && depth0.action) || helperMissing).call(depth0, {"name":"action","hash":{
+    'path': ((depth0 != null ? depth0._path : depth0)),
+    'click': ("delete")
+  },"data":data})))
+    + ">\n<i class=\"fa fa-trash\"></i>\n</button>\n</td>\n</tr>\n";
+},"useData":true});
 this.Lively = new RDR;
 
 Lively.Config = {

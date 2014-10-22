@@ -55,7 +55,8 @@ module.exports = function(grunt) {
 				    content = content.replace(/^[\x20\t]+/mg, '').replace(/[\x20\t]+$/mg, '');
 				    content = content.replace(/^[\r\n]+/, '').replace(/[\r\n]*$/, '\n');
 				    return content;
-				  }
+				  },
+				  partialRegex: /^_/
 				},
 				files: {
 					"tmp/<%= pkg.slug %>.rdr.templates.js": ["app/views/**/*.hbs"]

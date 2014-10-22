@@ -5588,6 +5588,16 @@ RDR = (function(_super) {
     return [in_loop, path];
   };
 
+  _Class.prototype.singularize = function(str) {
+    if (("" + str).slice(-3) === "ies") {
+      return "" + (("" + str).slice(-3)) + "y";
+    } else if (("" + str).slice(-1) === "s") {
+      return ("" + str).slice(-1);
+    } else {
+      return str;
+    }
+  };
+
   _Class.prototype.handlebarsHelpers = function() {
     var r;
     r = this;
@@ -5617,7 +5627,7 @@ RDR = (function(_super) {
       }
       return new Handlebars.SafeString(attrs);
     });
-    return Handlebars.registerHelper("action", function(options) {
+    Handlebars.registerHelper("action", function(options) {
       var attr, attrs, in_loop, key, path, _ref, _ref1;
       attrs = "";
       _ref = r.extractPath(options), in_loop = _ref[0], path = _ref[1];
@@ -5633,6 +5643,29 @@ RDR = (function(_super) {
         }
       }
       return new Handlebars.SafeString(attrs);
+    });
+    return Handlebars.registerHelper("render", function(variable, options) {
+      var collection, first, k, output, path, template, v;
+      output = "";
+      template = false;
+      collection = r.vars[variable];
+      if (typeof template !== "string") {
+        first = collection[Object.keys(collection)[0]];
+        if (typeof first !== "undefined") {
+          path = r.singularize(first._parent_key);
+        }
+        path = r.singularize(variable);
+        template = "/partials/" + path;
+      }
+      if (template in r.Templates) {
+        for (k in collection) {
+          v = collection[k];
+          output += "<tr><td>awesome</td></tr>";
+        }
+      } else {
+        r.Warn("Handlebars", "Partial Not Found: " + template);
+      }
+      return new Handlebars.SafeString(output);
     });
   };
 
