@@ -11,8 +11,10 @@
 	<tbody>
 		{{#each canned}}
 			<tr>
-				<td class="header_column align_center">#{{{ hash }}}</td>
-				<td>{{{ body }}}</td>
+				<td class="header_column align_center">
+					#<input type="text" {{bind-attr value="hash"}}>
+				</td>
+				<td><input type="text" {{bind-attr value="body"}}></td>
 				<td class="align_right">
 					<button class="fluid_width small gray red_hover">
 						<i class="fa fa-trash"></i>

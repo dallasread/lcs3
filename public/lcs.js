@@ -5628,15 +5628,19 @@ RDR = (function(_super) {
     var r;
     r = this;
     Handlebars.registerHelper("bind-attr", function(options) {
-      var attrs, k, v, value, _ref;
+      var attr, attrs, is_loop, key, value, _ref;
+      is_loop = "_parent" in options.data;
       attrs = "";
       _ref = options.hash;
-      for (k in _ref) {
-        v = _ref[k];
-        value = r.escapeQuotes(r.getByPath(r.vars, v));
-        attrs += "data-rdr-bind-attr=\"" + k + "\" ";
-        attrs += "data-rdr-bind-key=\"" + (v.replace(/\./g, "/")) + "\" ";
-        attrs += "" + k + "=\"" + value + "\"";
+      for (attr in _ref) {
+        key = _ref[attr];
+        if (is_loop) {
+          key = "canned/sweet/" + key;
+        }
+        attrs += "data-rdr-bind-attr=\"" + attr + "\" ";
+        attrs += "data-rdr-bind-key=\"" + key + "\" ";
+        value = r.escapeQuotes(r.getByPath(r.vars, key.replace(/\//g, ".")));
+        attrs += "" + attr + "=\"" + value + "\"";
       }
       return new Handlebars.SafeString(attrs);
     });
@@ -8592,13 +8596,16 @@ this["RDR"]["prototype"]["Templates"]["/admin/settings"] = Handlebars.template({
 
 
 this["RDR"]["prototype"]["Templates"]["/admin/settings/canned"] = Handlebars.template({"1":function(depth0,helpers,partials,data) {
-  var stack1, helper, functionType="function", helperMissing=helpers.helperMissing, buffer = "<tr>\n<td class=\"header_column align_center\">#";
-  stack1 = ((helper = (helper = helpers.hash || (depth0 != null ? depth0.hash : depth0)) != null ? helper : helperMissing),(typeof helper === functionType ? helper.call(depth0, {"name":"hash","hash":{},"data":data}) : helper));
-  if (stack1 != null) { buffer += stack1; }
-  buffer += "</td>\n<td>";
-  stack1 = ((helper = (helper = helpers.body || (depth0 != null ? depth0.body : depth0)) != null ? helper : helperMissing),(typeof helper === functionType ? helper.call(depth0, {"name":"body","hash":{},"data":data}) : helper));
-  if (stack1 != null) { buffer += stack1; }
-  return buffer + "</td>\n<td class=\"align_right\">\n<button class=\"fluid_width small gray red_hover\">\n<i class=\"fa fa-trash\"></i>\n</button>\n</td>\n</tr>\n";
+  var helperMissing=helpers.helperMissing, escapeExpression=this.escapeExpression;
+  return "<tr>\n<td class=\"header_column align_center\">\n#<input type=\"text\" "
+    + escapeExpression(((helpers['bind-attr'] || (depth0 && depth0['bind-attr']) || helperMissing).call(depth0, {"name":"bind-attr","hash":{
+    'value': ("hash")
+  },"data":data})))
+    + ">\n</td>\n<td><input type=\"text\" "
+    + escapeExpression(((helpers['bind-attr'] || (depth0 && depth0['bind-attr']) || helperMissing).call(depth0, {"name":"bind-attr","hash":{
+    'value': ("body")
+  },"data":data})))
+    + "></td>\n<td class=\"align_right\">\n<button class=\"fluid_width small gray red_hover\">\n<i class=\"fa fa-trash\"></i>\n</button>\n</td>\n</tr>\n";
 },"compiler":[6,">= 2.0.0-beta.1"],"main":function(depth0,helpers,partials,data) {
   var stack1, buffer = "<p>Canned are the things that go crazy and crazier. Triggers are the things that go crazy and crazier. Triggers are the things that go crazy and crazier.</p>\n\n<table class=\"table\">\n<thead>\n<tr>\n<th style=\"width: 19%; \" class=\"align_center\">Shortcut</th>\n<th style=\"width: 71%; \">Message</th>\n<th style=\"width: 10%; \"></th>\n</tr>\n</thead>\n<tbody>\n";
   stack1 = helpers.each.call(depth0, (depth0 != null ? depth0.canned : depth0), {"name":"each","hash":{},"fn":this.program(1, data),"inverse":this.noop,"data":data});

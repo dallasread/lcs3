@@ -5627,15 +5627,19 @@ RDR = (function(_super) {
     var r;
     r = this;
     Handlebars.registerHelper("bind-attr", function(options) {
-      var attrs, k, v, value, _ref;
+      var attr, attrs, is_loop, key, value, _ref;
+      is_loop = "_parent" in options.data;
       attrs = "";
       _ref = options.hash;
-      for (k in _ref) {
-        v = _ref[k];
-        value = r.escapeQuotes(r.getByPath(r.vars, v));
-        attrs += "data-rdr-bind-attr=\"" + k + "\" ";
-        attrs += "data-rdr-bind-key=\"" + (v.replace(/\./g, "/")) + "\" ";
-        attrs += "" + k + "=\"" + value + "\"";
+      for (attr in _ref) {
+        key = _ref[attr];
+        if (is_loop) {
+          key = "canned/sweet/" + key;
+        }
+        attrs += "data-rdr-bind-attr=\"" + attr + "\" ";
+        attrs += "data-rdr-bind-key=\"" + key + "\" ";
+        value = r.escapeQuotes(r.getByPath(r.vars, key.replace(/\//g, ".")));
+        attrs += "" + attr + "=\"" + value + "\"";
       }
       return new Handlebars.SafeString(attrs);
     });
