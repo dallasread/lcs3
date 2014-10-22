@@ -5384,8 +5384,6 @@ RDR = (function(_super) {
     return this.DS = new Firebase(this.DSURL);
   };
 
-  _Class.prototype.varChart = {};
-
   _Class.prototype.find = function(model, where, variable) {
     var cached, deferred, m, path, r;
     if (variable == null) {
@@ -5414,53 +5412,63 @@ RDR = (function(_super) {
         this.Debug("Listeners", "Read From Cache: " + path);
       } else {
         this.DS.child(path).once("value", function(snapshot) {
-          return r.updateLocalVar(variable, snapshot, deferred);
+          return r.updateLocalVar(variable, snapshot.val(), deferred);
         });
         this.DS.child(path).on("child_added", function(snapshot) {
-          return r.updateLocalVar(variable, snapshot);
+          return r.updateLocalVar("" + variable + "/" + (snapshot.name()), snapshot.val());
         });
         this.DS.child(path).on("child_changed", function(snapshot) {
-          return r.updateLocalVar(variable, snapshot);
+          return r.updateLocalVar("" + variable + "/" + (snapshot.name()), snapshot.val());
         });
         this.DS.child(path).on("child_removed", function(snapshot) {
-          return r.updateLocalVar(variable, snapshot);
+          return r.updateLocalVar("" + variable + "/" + (snapshot.name()), snapshot.val());
         });
         this.DSListeners.push(path);
         this.Debug("Listeners", "Added: " + path);
       }
-      return deferred.promise;
+      deferred.promise;
     }
-  };
-
-  _Class.prototype.save = function(attrs) {
-    var k, path, r, v, variable, _results;
-    r = this;
-    _results = [];
-    for (k in attrs) {
-      v = attrs[k];
-      variable = k.split("/")[0];
-      path = this.varChart[variable];
-      if (typeof path !== "undefined") {
-        path = "" + path + (k.split(variable)[1]);
-        _results.push(r.DS.child(path).set(v, function(error) {
-          if (!error) {
-            r.vars[k.replace(/\//, ".")] = v;
-            r.synchronousVars[k.replace(/\//, ".")] = v;
-            return r.Log("Vars", "Saved: " + path);
+    return {
+      save: function(attrs) {
+        var k, v, _results;
+        r = this;
+        _results = [];
+        for (k in attrs) {
+          v = attrs[k];
+          variable = k.split("/")[0];
+          path = this.varChart[variable];
+          if (typeof path !== "undefined") {
+            path = "" + path + (k.split(variable)[1]);
+            _results.push(r.DS.child(path).set(v, function(error) {
+              if (!error) {
+                r.vars[k.replace(/\//, ".")] = v;
+                r.synchronousVars[k.replace(/\//, ".")] = v;
+                return r.Log("Vars", "Saved: " + path);
+              } else {
+                r.Warn("Vars", "Permission Denied: " + v);
+                return r.DS.child(path).once("value", function(snapshot) {
+                  var value;
+                  value = snapshot.val();
+                  $("[data-rdr-bind-html='" + k + "']").html(value);
+                  return $("[data-rdr-bind-key='" + k + "']").each(function() {
+                    var attr;
+                    attr = $(this).attr("data-rdr-bind-attr");
+                    if (attr === "value") {
+                      return $(this).val(value);
+                    } else {
+                      return $(this).attr(attr, value);
+                    }
+                  });
+                });
+              }
+            }));
           } else {
-            r.Warn("Vars", "Permission Denied: " + v);
-            return r.DS.child(path).once("value", function(snapshot) {
-              var value;
-              value = snapshot.val();
-              return r.updateView(k, value);
-            });
+            _results.push(r.Warn("Vars", "Unable to Save: " + k));
           }
-        }));
-      } else {
-        _results.push(r.Warn("Vars", "Unable to Save: " + k));
+        }
+        return _results;
       }
-    }
-    return _results;
+    };
   };
 
   return _Class;
@@ -5514,19 +5522,26 @@ RDR = (function(_super) {
     var r;
     r = this;
     Handlebars.registerHelper("bind-attr", function(options) {
-      var attr, attrs, is_loop, key, value, _ref;
-      is_loop = "_parent" in options.data;
+      var attr, attrs, in_loop, key, path, value, _ref;
+      in_loop = false;
       attrs = "";
+      path = "";
+      if ("path" in options.hash) {
+        in_loop = true;
+        path = $(options.hash.path).attr("data-rdr-bind-html").replace("/_path", "");
+      }
       _ref = options.hash;
       for (attr in _ref) {
         key = _ref[attr];
-        if (is_loop) {
-          key = "canned/sweet/" + key;
+        if (attr !== "path") {
+          if (in_loop) {
+            key = "" + path + "/" + key;
+          }
+          attrs += "data-rdr-bind-attr=\"" + attr + "\" ";
+          attrs += "data-rdr-bind-key=\"" + key + "\" ";
+          value = r.escapeQuotes(r.getLocalVarByPath(key));
+          attrs += "" + attr + "=\"" + value + "\"";
         }
-        attrs += "data-rdr-bind-attr=\"" + attr + "\" ";
-        attrs += "data-rdr-bind-key=\"" + key + "\" ";
-        value = r.escapeQuotes(r.getLocalVarByPath(r.vars, key.replace(/\//g, ".")));
-        attrs += "" + attr + "=\"" + value + "\"";
       }
       return new Handlebars.SafeString(attrs);
     });
@@ -5615,15 +5630,6 @@ RDR = (function(_super) {
 
   _Class.prototype.currentPath = "/";
 
-  _Class.prototype.buildRoute = function(segments) {
-    var r;
-    r = this;
-    return Q.allSettled(this.initControllers(segments)).then(function() {
-      r.generateViews(segments.slice(0).reverse());
-      return r.isLoading = false;
-    });
-  };
-
   _Class.prototype.pathForSegments = function(pieces, reverse, index) {
     var segments;
     if (reverse == null) {
@@ -5654,7 +5660,10 @@ RDR = (function(_super) {
     } else {
       this.currentPath = new_path;
       this.Log("Router", "Found: " + new_path);
-      return this.buildRoute(segments);
+      return Q.allSettled(r.initControllers(segments)).then(function() {
+        r.generateViews(segments.slice(0).reverse());
+        return r.isLoading = false;
+      });
     }
   };
 
@@ -5710,92 +5719,87 @@ RDR = (function(_super) {
     return _Class.__super__.constructor.apply(this, arguments);
   }
 
+  _Class.prototype.varChart = {};
+
   _Class.prototype.synchronousVars = {};
 
   _Class.prototype.fetchSynchronousVars = function() {
-    return this.denormalizeVars(true, this.vars);
+    return this.prepareVars("", this.vars, true);
   };
 
-  _Class.prototype.denormalizeVars = function(synchronous, vars, path, initial) {
-    var global_vars, k, v, var_path;
+  _Class.prototype.prepareVars = function(parent_key, parent_value, synchronous) {
+    var key, value, var_key;
+    if (parent_key == null) {
+      parent_key = "";
+    }
+    if (parent_value == null) {
+      parent_value = {};
+    }
     if (synchronous == null) {
       synchronous = false;
     }
-    if (vars == null) {
-      vars = {};
-    }
-    if (path == null) {
-      path = "";
-    }
-    if (initial == null) {
-      initial = true;
-    }
-    if (typeof vars === "object") {
-      global_vars = synchronous ? this.synchronousVars : this.vars;
-      for (k in vars) {
-        v = vars[k];
-        var_path = "";
-        var_path += path;
-        if (var_path.length) {
-          var_path += "/";
-        }
-        if (typeof k !== "undefined") {
-          var_path += k;
-        }
-        if (typeof v === "object") {
-          this.denormalizeVars(synchronous, v, var_path, false);
+    for (key in parent_value) {
+      value = parent_value[key];
+      var_key = "";
+      var_key += parent_key;
+      if (var_key.length) {
+        var_key += "/";
+      }
+      var_key += key;
+      if (typeof value === "object") {
+        value._path = var_key;
+        this.prepareVars(var_key, value, synchronous);
+      } else {
+        this.setLocalVarByPath(this.vars, var_key, value);
+        if (synchronous) {
+          value = "<span data-rdr-bind-html='" + var_key + "'>" + value + "</span>";
+          this.setLocalVarByPath(this.synchronousVars, var_key, value);
         } else {
-          this.setLocalVarByPath(this.vars, var_path, v);
-          this.setLocalVarByPath(this.synchronousVars, var_path, v);
-          if (synchronous) {
-            vars[k] = "<span data-rdr-bind-html='" + var_path + "'>" + v + "</span>";
-          } else {
-            this.updateView(var_path, var_path, v);
-          }
+          this.updateView(var_key, value);
         }
       }
     }
-    if (initial) {
-      return global_vars;
+    if (synchronous) {
+      return this.synchronousVars;
     } else {
-      return vars;
+      return this.vars;
     }
   };
 
-  _Class.prototype.updateLocalVar = function(variable, snapshot, synchronous) {
-    var data, key, path, value;
+  _Class.prototype.updateLocalVar = function(path, value, synchronous) {
     if (synchronous == null) {
       synchronous = false;
     }
-    key = snapshot.name();
-    value = snapshot.val();
-    path = synchronous ? variable : "" + variable + "/" + key;
-    if (typeof value !== "object") {
-      data = {};
-      data[key] = value;
-      value = data;
-      path = variable;
-    }
+    this.prepareVars(path, value, synchronous);
+    this.Log("Vars", "Set: " + path);
     if (synchronous) {
-      synchronous.resolve();
+      return synchronous.promise;
     }
-    return this.Log("Vars", "Set: " + path);
   };
 
-  _Class.prototype.getLocalVarByPath = function(obj, desc) {
-    var arr;
-    obj = obj || window;
-    arr = desc.split(".");
-    while (arr.length) {
-      obj = obj[arr.shift()];
+  _Class.prototype.getLocalVarByPath = function(path_str) {
+    var o, p, path, vars, _i, _len;
+    o = "";
+    path_str = path_str.replace(/\//g, ".");
+    path = path_str.split(".");
+    vars = $.extend({}, this.vars);
+    for (_i = 0, _len = path.length; _i < _len; _i++) {
+      p = path[_i];
+      if (p in vars) {
+        vars = vars[p];
+      } else {
+        vars = "";
+        break;
+      }
     }
-    return obj;
+    return vars;
   };
 
-  _Class.prototype.setLocalVarByPath = function(obj, path, value) {
-    var elem, i, len, pList;
-    path = path.replace(/\//g, ".");
-    pList = path.split(".");
+  _Class.prototype.setLocalVarByPath = function(obj, path_str, value) {
+    var elem, i, len, pList, path;
+    path_str = path_str.replace(/\//g, ".");
+    path = path_str.split(".");
+    pList = path;
     len = pList.length;
     i = 0;
     while (i < len - 1) {
@@ -5887,7 +5891,7 @@ RDR = (function(_super) {
       this.Warn("Views", "Already Present: " + view_path);
     } else {
       if (view_path in this.Templates) {
-        vars = $.extend({}, this.fetchSynchronousVars());
+        vars = $.extend({}, this.synchronousVars);
         vars.vars = this.vars;
         vars.outlet = html;
         html = this.buildFromTemplate(this.Templates[view_path], vars, dasherized_path);
@@ -8605,17 +8609,15 @@ this["RDR"]["prototype"]["Templates"]["/admin/settings"] = Handlebars.template({
 
 
 this["RDR"]["prototype"]["Templates"]["/admin/settings/canned"] = Handlebars.template({"1":function(depth0,helpers,partials,data) {
-  var stack1, helper, functionType="function", helperMissing=helpers.helperMissing, escapeExpression=this.escapeExpression, buffer = "<tr>\n<td class=\"header_column align_center\">\n";
-  stack1 = ((helper = (helper = helpers.path || (depth0 != null ? depth0.path : depth0)) != null ? helper : helperMissing),(typeof helper === functionType ? helper.call(depth0, {"name":"path","hash":{},"data":data}) : helper));
-  if (stack1 != null) { buffer += stack1; }
-  return buffer + "\n#<input type=\"text\" "
+  var helperMissing=helpers.helperMissing, escapeExpression=this.escapeExpression;
+  return "<tr>\n<td class=\"header_column align_center\">\n#<input type=\"text\" "
     + escapeExpression(((helpers['bind-attr'] || (depth0 && depth0['bind-attr']) || helperMissing).call(depth0, {"name":"bind-attr","hash":{
-    'path': ((depth0 != null ? depth0.path : depth0)),
+    'path': ((depth0 != null ? depth0._path : depth0)),
     'value': ("hash")
   },"data":data})))
     + ">\n</td>\n<td><input type=\"text\" "
     + escapeExpression(((helpers['bind-attr'] || (depth0 && depth0['bind-attr']) || helperMissing).call(depth0, {"name":"bind-attr","hash":{
-    'path': ((depth0 != null ? depth0.path : depth0)),
+    'path': ((depth0 != null ? depth0._path : depth0)),
     'value': ("body")
   },"data":data})))
     + "></td>\n<td class=\"align_right\">\n<button class=\"fluid_width small gray red_hover\">\n<i class=\"fa fa-trash\"></i>\n</button>\n</td>\n</tr>\n";
