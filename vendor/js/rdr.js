@@ -5517,10 +5517,6 @@ RDR = (function(_super) {
     }
   };
 
-  _Class.prototype.capitalize = function(str) {
-    return ("" + str).charAt(0).toUpperCase() + ("" + str).slice(1);
-  };
-
   _Class.prototype.DSCallback = function(action, path, value, error) {
     var r;
     if (error) {
@@ -5622,35 +5618,11 @@ RDR = (function(_super) {
     return [in_loop, path];
   };
 
-  _Class.prototype.singularize = function(str) {
-    if (("" + str).slice(-3) === "ies") {
-      return "" + (("" + str).slice(0, -3)) + "y";
-    } else if (("" + str).slice(-1) === "s") {
-      return ("" + str).slice(0, -1);
-    } else {
-      return "" + str;
-    }
-  };
-
-  _Class.prototype.pluralize = function(str) {
-    if (str in this.Models && "plural" in this.Models[str]) {
-      return this.Models[str].plural;
-    } else {
-      if (("" + str).slice(-1) === "y") {
-        return "" + (str.slice(0, -1)) + "ies";
-      } else if (("" + str).slice(-1) === "s") {
-        return "" + str;
-      } else {
-        return "" + str + "s";
-      }
-    }
-  };
-
   _Class.prototype.handlebarsHelpers = function() {
     var r;
     r = this;
     Handlebars.registerHelper("bind-attr", function(options) {
-      var attr, attrs, in_loop, key, path, value, _ref, _ref1;
+      var attr, attrs, in_loop, key, path, slashed_key, template, value, _ref, _ref1;
       attrs = "";
       _ref = r.extractPath(options), in_loop = _ref[0], path = _ref[1];
       _ref1 = options.hash;
@@ -5659,13 +5631,18 @@ RDR = (function(_super) {
         if (attr === "event") {
           attrs += "data-rdr-bind-" + attr + "=\"" + key + "\" ";
         } else {
-          key = r.slasherize(key);
+          slashed_key = r.slasherize(key);
           if (in_loop) {
-            key = "" + path + key;
+            slashed_key = "" + path + slashed_key;
           }
           attrs += "data-rdr-bind-attr=\"" + attr + "\" ";
-          attrs += "data-rdr-bind-key=\"" + key + "\" ";
-          value = r.escapeQuotes(r.getLocalVarByPath(key));
+          attrs += "data-rdr-bind-key=\"" + slashed_key + "\" ";
+          if (key.indexOf("{") !== -1) {
+            template = Handlebars.compile(key);
+            value = template(options.data.root);
+          } else {
+            value = r.escapeQuotes(r.getLocalVarByPath(slashed_key));
+          }
           attrs += "" + attr + "=\"" + value + "\"";
         }
       }
@@ -5715,6 +5692,61 @@ RDR = (function(_super) {
       }
       return new Handlebars.SafeString(output);
     });
+  };
+
+  return _Class;
+
+})(RDR);
+
+RDR = (function(_super) {
+  __extends(_Class, _super);
+
+  function _Class() {
+    return _Class.__super__.constructor.apply(this, arguments);
+  }
+
+  _Class.prototype.singularize = function(str) {
+    if (("" + str).slice(-3) === "ies") {
+      return "" + (("" + str).slice(0, -3)) + "y";
+    } else if (("" + str).slice(-1) === "s") {
+      return ("" + str).slice(0, -1);
+    } else {
+      return "" + str;
+    }
+  };
+
+  _Class.prototype.pluralize = function(str) {
+    if (str in this.Models && "plural" in this.Models[str]) {
+      return this.Models[str].plural;
+    } else {
+      if (("" + str).slice(-1) === "y") {
+        return "" + (str.slice(0, -1)) + "ies";
+      } else if (("" + str).slice(-1) === "s") {
+        return "" + str;
+      } else {
+        return "" + str + "s";
+      }
+    }
+  };
+
+  _Class.prototype.capitalize = function(str) {
+    return ("" + str).charAt(0).toUpperCase() + ("" + str).slice(1);
+  };
+
+  _Class.prototype.slasherize = function(str) {
+    str = ("" + str).replace(/\./g, "/");
+    if (str[0] !== "/") {
+      str = "/" + str;
+    }
+    return str;
+  };
+
+  _Class.prototype.dotterize = function(str) {
+    str = ("" + str).replace(/\//g, ".");
+    if (str[0] === ".") {
+      str = str.slice(1);
+    }
+    return str;
   };
 
   return _Class;
@@ -6014,26 +6046,11 @@ RDR = (function(_super) {
 
   _Class.prototype.isLoading = false;
 
-  _Class.prototype.slasherize = function(path) {
-    path = ("" + path).replace(/\./g, "/");
-    if (path[0] !== "/") {
-      path = "/" + path;
-    }
-    return path;
-  };
-
-  _Class.prototype.dotterize = function(path) {
-    path = ("" + path).replace(/\//g, ".");
-    if (path[0] === ".") {
-      path = path.slice(1);
-    }
-    return path;
-  };
-
   _Class.prototype.markActiveRoutes = function(segments) {
     var container, index, path, paths, segment, _i, _len;
     segments = segments.slice(0).reverse();
     paths = [];
+    paths.push("a[href='" + window.location.hash + "']");
     for (index = _i = 0, _len = segments.length; _i < _len; index = ++_i) {
       segment = segments[index];
       path = this.pathForSegments(segments, false, index);
@@ -6041,7 +6058,8 @@ RDR = (function(_super) {
     }
     container = $(this.Config.container);
     container.find("a.active").removeClass("active");
-    return container.find(paths.join(", ")).addClass("active");
+    container.find(paths.join(", ")).addClass("active");
+    return this.Warn(paths);
   };
 
   _Class.prototype.generateViews = function(views, placer, html) {

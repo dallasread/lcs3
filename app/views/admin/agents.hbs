@@ -14,25 +14,12 @@
 			</tr>
 		</thead>
 		<tbody>
-			{{#each agents}}
-				<tr>
-					<td class="align_center">
-						<i class="fa fa-check-circle fa-lrg online"></i>
-					</td>
-					<td>{{{ name }}}</td>
-					<td>{{{ email }}}</td>
-					<td class="align_right">
-						<button class="fluid_width small gray red_hover">
-							<i class="fa fa-trash fa-mdm"></i>
-						</button>
-					</td>
-				</tr>
-			{{/each}}
+			{{render "agents"}}
 		</tbody>
 	</table>
 
 	<div class="upper_space">
-		<button>Add Agent</button>
+		<button {{action click="create"}}>Add Agent</button>
 	</div>
 
 </div>

@@ -60,19 +60,7 @@
 </div>
 
 <div class="visitor_profile_messages">
-	{{#each messages}}
-		<div {{bind-attr class=":message from_agent:from_agent private:private"}}>
-			{{#if private}}
-				<i class="fa fa-lock lock"></i>
-			{{/if}}
-			
-			<div class="body">
-				{{ body }}
-			</div>
-	
-			<div class="clear"></div>
-		</div>
-	{{/each}}
+	{{render "visitor.messages" "/partials/message"}}
 </div>
 
 <form class="visitor_new_message">

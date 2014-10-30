@@ -5518,10 +5518,6 @@ RDR = (function(_super) {
     }
   };
 
-  _Class.prototype.capitalize = function(str) {
-    return ("" + str).charAt(0).toUpperCase() + ("" + str).slice(1);
-  };
-
   _Class.prototype.DSCallback = function(action, path, value, error) {
     var r;
     if (error) {
@@ -5623,35 +5619,11 @@ RDR = (function(_super) {
     return [in_loop, path];
   };
 
-  _Class.prototype.singularize = function(str) {
-    if (("" + str).slice(-3) === "ies") {
-      return "" + (("" + str).slice(0, -3)) + "y";
-    } else if (("" + str).slice(-1) === "s") {
-      return ("" + str).slice(0, -1);
-    } else {
-      return "" + str;
-    }
-  };
-
-  _Class.prototype.pluralize = function(str) {
-    if (str in this.Models && "plural" in this.Models[str]) {
-      return this.Models[str].plural;
-    } else {
-      if (("" + str).slice(-1) === "y") {
-        return "" + (str.slice(0, -1)) + "ies";
-      } else if (("" + str).slice(-1) === "s") {
-        return "" + str;
-      } else {
-        return "" + str + "s";
-      }
-    }
-  };
-
   _Class.prototype.handlebarsHelpers = function() {
     var r;
     r = this;
     Handlebars.registerHelper("bind-attr", function(options) {
-      var attr, attrs, in_loop, key, path, value, _ref, _ref1;
+      var attr, attrs, in_loop, key, path, slashed_key, template, value, _ref, _ref1;
       attrs = "";
       _ref = r.extractPath(options), in_loop = _ref[0], path = _ref[1];
       _ref1 = options.hash;
@@ -5660,13 +5632,18 @@ RDR = (function(_super) {
         if (attr === "event") {
           attrs += "data-rdr-bind-" + attr + "=\"" + key + "\" ";
         } else {
-          key = r.slasherize(key);
+          slashed_key = r.slasherize(key);
           if (in_loop) {
-            key = "" + path + key;
+            slashed_key = "" + path + slashed_key;
           }
           attrs += "data-rdr-bind-attr=\"" + attr + "\" ";
-          attrs += "data-rdr-bind-key=\"" + key + "\" ";
-          value = r.escapeQuotes(r.getLocalVarByPath(key));
+          attrs += "data-rdr-bind-key=\"" + slashed_key + "\" ";
+          if (key.indexOf("{") !== -1) {
+            template = Handlebars.compile(key);
+            value = template(options.data.root);
+          } else {
+            value = r.escapeQuotes(r.getLocalVarByPath(slashed_key));
+          }
           attrs += "" + attr + "=\"" + value + "\"";
         }
       }
@@ -5716,6 +5693,61 @@ RDR = (function(_super) {
       }
       return new Handlebars.SafeString(output);
     });
+  };
+
+  return _Class;
+
+})(RDR);
+
+RDR = (function(_super) {
+  __extends(_Class, _super);
+
+  function _Class() {
+    return _Class.__super__.constructor.apply(this, arguments);
+  }
+
+  _Class.prototype.singularize = function(str) {
+    if (("" + str).slice(-3) === "ies") {
+      return "" + (("" + str).slice(0, -3)) + "y";
+    } else if (("" + str).slice(-1) === "s") {
+      return ("" + str).slice(0, -1);
+    } else {
+      return "" + str;
+    }
+  };
+
+  _Class.prototype.pluralize = function(str) {
+    if (str in this.Models && "plural" in this.Models[str]) {
+      return this.Models[str].plural;
+    } else {
+      if (("" + str).slice(-1) === "y") {
+        return "" + (str.slice(0, -1)) + "ies";
+      } else if (("" + str).slice(-1) === "s") {
+        return "" + str;
+      } else {
+        return "" + str + "s";
+      }
+    }
+  };
+
+  _Class.prototype.capitalize = function(str) {
+    return ("" + str).charAt(0).toUpperCase() + ("" + str).slice(1);
+  };
+
+  _Class.prototype.slasherize = function(str) {
+    str = ("" + str).replace(/\./g, "/");
+    if (str[0] !== "/") {
+      str = "/" + str;
+    }
+    return str;
+  };
+
+  _Class.prototype.dotterize = function(str) {
+    str = ("" + str).replace(/\//g, ".");
+    if (str[0] === ".") {
+      str = str.slice(1);
+    }
+    return str;
   };
 
   return _Class;
@@ -6015,26 +6047,11 @@ RDR = (function(_super) {
 
   _Class.prototype.isLoading = false;
 
-  _Class.prototype.slasherize = function(path) {
-    path = ("" + path).replace(/\./g, "/");
-    if (path[0] !== "/") {
-      path = "/" + path;
-    }
-    return path;
-  };
-
-  _Class.prototype.dotterize = function(path) {
-    path = ("" + path).replace(/\//g, ".");
-    if (path[0] === ".") {
-      path = path.slice(1);
-    }
-    return path;
-  };
-
   _Class.prototype.markActiveRoutes = function(segments) {
     var container, index, path, paths, segment, _i, _len;
     segments = segments.slice(0).reverse();
     paths = [];
+    paths.push("a[href='" + window.location.hash + "']");
     for (index = _i = 0, _len = segments.length; _i < _len; index = ++_i) {
       segment = segments[index];
       path = this.pathForSegments(segments, false, index);
@@ -6042,7 +6059,8 @@ RDR = (function(_super) {
     }
     container = $(this.Config.container);
     container.find("a.active").removeClass("active");
-    return container.find(paths.join(", ")).addClass("active");
+    container.find(paths.join(", ")).addClass("active");
+    return this.Warn(paths);
   };
 
   _Class.prototype.generateViews = function(views, placer, html) {
@@ -8797,19 +8815,15 @@ this["RDR"]["prototype"]["Templates"]["/admin"] = Handlebars.template({"compiler
 
 
 
-this["RDR"]["prototype"]["Templates"]["/admin/agents"] = Handlebars.template({"1":function(depth0,helpers,partials,data) {
-  var stack1, helper, functionType="function", helperMissing=helpers.helperMissing, buffer = "<tr>\n<td class=\"align_center\">\n<i class=\"fa fa-check-circle fa-lrg online\"></i>\n</td>\n<td>";
-  stack1 = ((helper = (helper = helpers.name || (depth0 != null ? depth0.name : depth0)) != null ? helper : helperMissing),(typeof helper === functionType ? helper.call(depth0, {"name":"name","hash":{},"data":data}) : helper));
-  if (stack1 != null) { buffer += stack1; }
-  buffer += "</td>\n<td>";
-  stack1 = ((helper = (helper = helpers.email || (depth0 != null ? depth0.email : depth0)) != null ? helper : helperMissing),(typeof helper === functionType ? helper.call(depth0, {"name":"email","hash":{},"data":data}) : helper));
-  if (stack1 != null) { buffer += stack1; }
-  return buffer + "</td>\n<td class=\"align_right\">\n<button class=\"fluid_width small gray red_hover\">\n<i class=\"fa fa-trash fa-mdm\"></i>\n</button>\n</td>\n</tr>\n";
-},"compiler":[6,">= 2.0.0-beta.1"],"main":function(depth0,helpers,partials,data) {
-  var stack1, buffer = "<div class=\"pane\">\n\n<h2>Agents</h2>\n\n<p>This is a desciprtion of agents. Should you need any help, don't be afraid to ask for it. This is a desciprtion of agents. Should you need any help, don't be afraid to ask for it. </p>\n\n<table class=\"table\">\n<thead>\n<tr>\n<th style=\"width: 11%;\" class=\"align_center\">Online</th>\n<th style=\"width: 25%;\">Name</th>\n<th style=\"width: 54%;\">Email</th>\n<th style=\"width: 10%;\"></th>\n</tr>\n</thead>\n<tbody>\n";
-  stack1 = helpers.each.call(depth0, (depth0 != null ? depth0.agents : depth0), {"name":"each","hash":{},"fn":this.program(1, data),"inverse":this.noop,"data":data});
-  if (stack1 != null) { buffer += stack1; }
-  return buffer + "</tbody>\n</table>\n\n<div class=\"upper_space\">\n<button>Add Agent</button>\n</div>\n\n</div>\n";
+this["RDR"]["prototype"]["Templates"]["/admin/agents"] = Handlebars.template({"compiler":[6,">= 2.0.0-beta.1"],"main":function(depth0,helpers,partials,data) {
+  var helperMissing=helpers.helperMissing, escapeExpression=this.escapeExpression;
+  return "<div class=\"pane\">\n\n<h2>Agents</h2>\n\n<p>This is a desciprtion of agents. Should you need any help, don't be afraid to ask for it. This is a desciprtion of agents. Should you need any help, don't be afraid to ask for it. </p>\n\n<table class=\"table\">\n<thead>\n<tr>\n<th style=\"width: 11%;\" class=\"align_center\">Online</th>\n<th style=\"width: 25%;\">Name</th>\n<th style=\"width: 54%;\">Email</th>\n<th style=\"width: 10%;\"></th>\n</tr>\n</thead>\n<tbody>\n"
+    + escapeExpression(((helpers.render || (depth0 && depth0.render) || helperMissing).call(depth0, "agents", {"name":"render","hash":{},"data":data})))
+    + "\n</tbody>\n</table>\n\n<div class=\"upper_space\">\n<button "
+    + escapeExpression(((helpers.action || (depth0 && depth0.action) || helperMissing).call(depth0, {"name":"action","hash":{
+    'click': ("create")
+  },"data":data})))
+    + ">Add Agent</button>\n</div>\n\n</div>\n";
 },"useData":true});
 
 
@@ -8915,31 +8929,10 @@ this["RDR"]["prototype"]["Templates"]["/admin/upgrade"] = Handlebars.template({"
 
 
 
-this["RDR"]["prototype"]["Templates"]["/admin/visitors"] = Handlebars.template({"1":function(depth0,helpers,partials,data) {
-  var stack1, helper, helperMissing=helpers.helperMissing, escapeExpression=this.escapeExpression, functionType="function", buffer = "<a "
-    + escapeExpression(((helpers['bind-attr'] || (depth0 && depth0['bind-attr']) || helperMissing).call(depth0, {"name":"bind-attr","hash":{
-    'path': ((depth0 != null ? depth0._path : depth0)),
-    'href': ("id")
-  },"data":data})))
-    + " class=\"visitor ";
-  stack1 = helpers['if'].call(depth0, (depth0 != null ? depth0.online : depth0), {"name":"if","hash":{},"fn":this.program(2, data),"inverse":this.noop,"data":data});
-  if (stack1 != null) { buffer += stack1; }
-  buffer += " ";
-  stack1 = helpers['if'].call(depth0, (depth0 != null ? depth0.has_unread : depth0), {"name":"if","hash":{},"fn":this.program(4, data),"inverse":this.noop,"data":data});
-  if (stack1 != null) { buffer += stack1; }
-  buffer += "\">\n<span class=\"name\">\n<span >";
-  stack1 = ((helper = (helper = helpers.name || (depth0 != null ? depth0.name : depth0)) != null ? helper : helperMissing),(typeof helper === functionType ? helper.call(depth0, {"name":"name","hash":{},"data":data}) : helper));
-  if (stack1 != null) { buffer += stack1; }
-  return buffer + "</span>\n</span>\n<span class=\"icons\">\n<i title=\"Apple\" class=\"fa fa-apple\"></i>\n<i title=\"Windows\" class=\"fa fa-windows\"></i>\n<i title=\"Canada\" class=\"fa fa-flag\"></i>\n</span>\n<span class=\"last_seen\">\n<span >3 hours ago</span>\n</span>\n<span class=\"clear\"></span>\n</a>\n";
-},"2":function(depth0,helpers,partials,data) {
-  return "online";
-  },"4":function(depth0,helpers,partials,data) {
-  return "has_unread";
-  },"compiler":[6,">= 2.0.0-beta.1"],"main":function(depth0,helpers,partials,data) {
-  var stack1, helper, functionType="function", helperMissing=helpers.helperMissing, buffer = "<div class=\"pane\" data-tab=\"!/visitors\">\n\n<input type=\"text\" class=\"visitors_search\" placeholder=\"Search...\">\n\n<div class=\"visitors\">\n\n";
-  stack1 = helpers.each.call(depth0, (depth0 != null ? depth0.visitors : depth0), {"name":"each","hash":{},"fn":this.program(1, data),"inverse":this.noop,"data":data});
-  if (stack1 != null) { buffer += stack1; }
-  buffer += "\n</div>\n\n";
+this["RDR"]["prototype"]["Templates"]["/admin/visitors"] = Handlebars.template({"compiler":[6,">= 2.0.0-beta.1"],"main":function(depth0,helpers,partials,data) {
+  var stack1, helper, helperMissing=helpers.helperMissing, escapeExpression=this.escapeExpression, functionType="function", buffer = "<div class=\"pane\" data-tab=\"!/visitors\">\n\n<input type=\"text\" class=\"visitors_search\" placeholder=\"Search...\">\n\n<div class=\"visitors\">\n\n"
+    + escapeExpression(((helpers.render || (depth0 && depth0.render) || helperMissing).call(depth0, "visitors", {"name":"render","hash":{},"data":data})))
+    + "\n\n</div>\n\n";
   stack1 = ((helper = (helper = helpers.outlet || (depth0 != null ? depth0.outlet : depth0)) != null ? helper : helperMissing),(typeof helper === functionType ? helper.call(depth0, {"name":"outlet","hash":{},"data":data}) : helper));
   if (stack1 != null) { buffer += stack1; }
   return buffer + "\n\n</div>\n";
@@ -8964,20 +8957,7 @@ this["RDR"]["prototype"]["Templates"]["/admin/visitors/visitor"] = Handlebars.te
   stack1 = ((helper = (helper = helpers.name || (depth0 != null ? depth0.name : depth0)) != null ? helper : helperMissing),(typeof helper === functionType ? helper.call(depth0, {"name":"name","hash":{},"data":data}) : helper));
   if (stack1 != null) { buffer += stack1; }
   return buffer + "</span>\n<span class=\"delete_tag\">&times;</span>\n</li>\n";
-},"3":function(depth0,helpers,partials,data) {
-  var stack1, helper, helperMissing=helpers.helperMissing, escapeExpression=this.escapeExpression, functionType="function", buffer = "<div "
-    + escapeExpression(((helpers['bind-attr'] || (depth0 && depth0['bind-attr']) || helperMissing).call(depth0, {"name":"bind-attr","hash":{
-    'class': (":message from_agent:from_agent private:private")
-  },"data":data})))
-    + ">\n";
-  stack1 = helpers['if'].call(depth0, (depth0 != null ? depth0['private'] : depth0), {"name":"if","hash":{},"fn":this.program(4, data),"inverse":this.noop,"data":data});
-  if (stack1 != null) { buffer += stack1; }
-  return buffer + "\n<div class=\"body\">\n"
-    + escapeExpression(((helper = (helper = helpers.body || (depth0 != null ? depth0.body : depth0)) != null ? helper : helperMissing),(typeof helper === functionType ? helper.call(depth0, {"name":"body","hash":{},"data":data}) : helper)))
-    + "\n</div>\n\n<div class=\"clear\"></div>\n</div>\n";
-},"4":function(depth0,helpers,partials,data) {
-  return "<i class=\"fa fa-lock lock\"></i>\n";
-  },"compiler":[6,">= 2.0.0-beta.1"],"main":function(depth0,helpers,partials,data) {
+},"compiler":[6,">= 2.0.0-beta.1"],"main":function(depth0,helpers,partials,data) {
   var stack1, helper, lambda=this.lambda, functionType="function", helperMissing=helpers.helperMissing, escapeExpression=this.escapeExpression, buffer = "<div class=\"visitor_profile_header\">\n<ul class=\"actions\">\n<li class=\"action archive\"><i class=\"fa fa-archive\" title=\"Archive\"></i></li>\n<li class=\"action\"><i class=\"fa fa-sign-out\" title=\"Transfer\"></i></li>\n</ul>\n\n\n<div class=\"info\">\n<h2 class=\"name\">\n";
   stack1 = lambda(((stack1 = (depth0 != null ? depth0.visitor : depth0)) != null ? stack1.name : stack1), depth0);
   if (stack1 != null) { buffer += stack1; }
@@ -9002,10 +8982,9 @@ this["RDR"]["prototype"]["Templates"]["/admin/visitors/visitor"] = Handlebars.te
   buffer += "</span>\n<span class=\"clear\"></span>\n</p>\n<p>\n<span class=\"more_label\">Address</span>\n<span class=\"more_detail\">";
   stack1 = ((helper = (helper = helpers.address || (depth0 != null ? depth0.address : depth0)) != null ? helper : helperMissing),(typeof helper === functionType ? helper.call(depth0, {"name":"address","hash":{},"data":data}) : helper));
   if (stack1 != null) { buffer += stack1; }
-  buffer += "</span>\n<span class=\"clear\"></span>\n</p>\n<p>\n<span class=\"more_label\">Last Seen</span>\n<span class=\"more_detail\"><span >10 minutes ago</span></span>\n<span class=\"clear\"></span>\n</p>\n<div class=\"clear\"></div>\n</div>\n</div>\n\n<div class=\"visitor_profile_messages\">\n";
-  stack1 = helpers.each.call(depth0, (depth0 != null ? depth0.messages : depth0), {"name":"each","hash":{},"fn":this.program(3, data),"inverse":this.noop,"data":data});
-  if (stack1 != null) { buffer += stack1; }
-  return buffer + "</div>\n\n<form class=\"visitor_new_message\">\n"
+  return buffer + "</span>\n<span class=\"clear\"></span>\n</p>\n<p>\n<span class=\"more_label\">Last Seen</span>\n<span class=\"more_detail\"><span >10 minutes ago</span></span>\n<span class=\"clear\"></span>\n</p>\n<div class=\"clear\"></div>\n</div>\n</div>\n\n<div class=\"visitor_profile_messages\">\n"
+    + escapeExpression(((helpers.render || (depth0 && depth0.render) || helperMissing).call(depth0, "visitor.messages", "/partials/message", {"name":"render","hash":{},"data":data})))
+    + "\n</div>\n\n<form class=\"visitor_new_message\">\n"
     + escapeExpression(((helpers.textarea || (depth0 && depth0.textarea) || helperMissing).call(depth0, {"name":"textarea","hash":{
     'value': ((depth0 != null ? depth0.body : depth0))
   },"data":data})))
@@ -9053,6 +9032,27 @@ this["RDR"]["prototype"]["Templates"]["/chatbox"] = Handlebars.template({"1":fun
 this["RDR"]["prototype"]["Templates"]["/loading"] = Handlebars.template({"compiler":[6,">= 2.0.0-beta.1"],"main":function(depth0,helpers,partials,data) {
   return "<div class=\"application_loading loading\"></div>\n";
   },"useData":true});
+
+
+
+this["RDR"]["prototype"]["Templates"]["/partials/agent"] = Handlebars.template({"compiler":[6,">= 2.0.0-beta.1"],"main":function(depth0,helpers,partials,data) {
+  var helperMissing=helpers.helperMissing, escapeExpression=this.escapeExpression;
+  return "<tr>\n<td class=\"align_center\">\n<i class=\"fa fa-check-circle fa-lrg online\"></i>\n</td>\n<td>\n<input type=\"text\" "
+    + escapeExpression(((helpers['bind-attr'] || (depth0 && depth0['bind-attr']) || helperMissing).call(depth0, {"name":"bind-attr","hash":{
+    'event': ("blur"),
+    'value': ("name")
+  },"data":data})))
+    + ">\n</td>\n<td>\n<input type=\"text\" "
+    + escapeExpression(((helpers['bind-attr'] || (depth0 && depth0['bind-attr']) || helperMissing).call(depth0, {"name":"bind-attr","hash":{
+    'event': ("blur"),
+    'value': ("email")
+  },"data":data})))
+    + ">\n</td>\n<td class=\"align_right\">\n<button class=\"fluid_width small gray red_hover\" "
+    + escapeExpression(((helpers.action || (depth0 && depth0.action) || helperMissing).call(depth0, {"name":"action","hash":{
+    'click': ("delete")
+  },"data":data})))
+    + ">\n<i class=\"fa fa-trash fa-mdm\"></i>\n</button>\n</td>\n</tr>\n";
+},"useData":true});
 
 
 
@@ -9118,6 +9118,15 @@ this["RDR"]["prototype"]["Templates"]["/partials/introducer"] = Handlebars.templ
 
 
 
+this["RDR"]["prototype"]["Templates"]["/partials/message"] = Handlebars.template({"compiler":[6,">= 2.0.0-beta.1"],"main":function(depth0,helpers,partials,data) {
+  var stack1, helper, functionType="function", helperMissing=helpers.helperMissing, buffer = "<div class=\"message\" >\n<div class=\"body\">\n";
+  stack1 = ((helper = (helper = helpers.body || (depth0 != null ? depth0.body : depth0)) != null ? helper : helperMissing),(typeof helper === functionType ? helper.call(depth0, {"name":"body","hash":{},"data":data}) : helper));
+  if (stack1 != null) { buffer += stack1; }
+  return buffer + "\n</div>\n\n<div class=\"clear\"></div>\n</div>\n";
+},"useData":true});
+
+
+
 this["RDR"]["prototype"]["Templates"]["/partials/trigger"] = Handlebars.template({"compiler":[6,">= 2.0.0-beta.1"],"main":function(depth0,helpers,partials,data) {
   var helperMissing=helpers.helperMissing, escapeExpression=this.escapeExpression;
   return "<tr>\n<td><input type=\"text\" "
@@ -9150,6 +9159,37 @@ this["RDR"]["prototype"]["Templates"]["/partials/trigger"] = Handlebars.template
     'click': ("delete")
   },"data":data})))
     + ">\n<i class=\"fa fa-trash\"></i>\n</button>\n</td>\n</tr>\n";
+},"useData":true});
+
+
+
+this["RDR"]["prototype"]["Templates"]["/partials/visitor"] = Handlebars.template({"1":function(depth0,helpers,partials,data) {
+  return "online";
+  },"3":function(depth0,helpers,partials,data) {
+  return "has_unread";
+  },"compiler":[6,">= 2.0.0-beta.1"],"main":function(depth0,helpers,partials,data) {
+  var stack1, helper, helperMissing=helpers.helperMissing, escapeExpression=this.escapeExpression, functionType="function", buffer = "<a "
+    + escapeExpression(((helpers['bind-attr'] || (depth0 && depth0['bind-attr']) || helperMissing).call(depth0, {"name":"bind-attr","hash":{
+    'href': ("#/admin/visitors/{{ id }}")
+  },"data":data})))
+    + " class=\"visitor ";
+  stack1 = helpers['if'].call(depth0, (depth0 != null ? depth0.online : depth0), {"name":"if","hash":{},"fn":this.program(1, data),"inverse":this.noop,"data":data});
+  if (stack1 != null) { buffer += stack1; }
+  buffer += " ";
+  stack1 = helpers['if'].call(depth0, (depth0 != null ? depth0.has_unread : depth0), {"name":"if","hash":{},"fn":this.program(3, data),"inverse":this.noop,"data":data});
+  if (stack1 != null) { buffer += stack1; }
+  buffer += "\">\n<span class=\"name\">\n<span "
+    + escapeExpression(((helpers['bind-attr'] || (depth0 && depth0['bind-attr']) || helperMissing).call(depth0, {"name":"bind-attr","hash":{
+    'title': ("email")
+  },"data":data})))
+    + ">";
+  stack1 = ((helper = (helper = helpers.name || (depth0 != null ? depth0.name : depth0)) != null ? helper : helperMissing),(typeof helper === functionType ? helper.call(depth0, {"name":"name","hash":{},"data":data}) : helper));
+  if (stack1 != null) { buffer += stack1; }
+  return buffer + "</span>\n</span>\n<span class=\"icons\">\n<i title=\"Apple\" class=\"fa fa-apple\"></i>\n<i title=\"Windows\" class=\"fa fa-windows\"></i>\n<i title=\"Canada\" class=\"fa fa-flag\"></i>\n</span>\n<span class=\"last_seen\">\n<span "
+    + escapeExpression(((helpers['bind-attr'] || (depth0 && depth0['bind-attr']) || helperMissing).call(depth0, {"name":"bind-attr","hash":{
+    'title': ("updated_at")
+  },"data":data})))
+    + ">3 hours ago</span>\n</span>\n<span class=\"clear\"></span>\n</a>\n";
 },"useData":true});
 this.Lively = new RDR;
 
@@ -9216,6 +9256,16 @@ Lively.Controllers["/admin/agents"] = {
     return Lively.find("agent", {
       chatbox: Lively.Glob["chatbox"]
     });
+  },
+  actions: {
+    create: function() {
+      return Lively.create("agent", {
+        name: "",
+        email: "",
+        active: false,
+        online: false
+      });
+    }
   }
 };
 
@@ -9312,7 +9362,8 @@ Lively.Models["agent"] = {
     chatbox: "string",
     name: "string",
     email: "string",
-    online: "boolean"
+    online: "boolean",
+    active: "boolean"
   }
 };
 

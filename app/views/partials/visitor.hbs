@@ -1,0 +1,14 @@
+<a {{bind-attr href="#/admin/visitors/{{ id }}"}} class="visitor {{#if online}}online{{/if}} {{#if has_unread}}has_unread{{/if}}">
+	<span class="name">
+		<span {{bind-attr title="email"}}>{{{ name }}}</span>
+	</span>
+	<span class="icons">
+		<i title="Apple" class="fa fa-apple"></i>
+		<i title="Windows" class="fa fa-windows"></i>
+		<i title="Canada" class="fa fa-flag"></i>
+	</span>
+	<span class="last_seen">
+		<span {{bind-attr title="updated_at"}}>3 hours ago</span>
+	</span>
+	<span class="clear"></span>
+</a>

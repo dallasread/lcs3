@@ -5,3 +5,4 @@ Lively.Models["agent"] =
 		name: "string"
 		email: "string"
 		online: "boolean"
+		active: "boolean"
