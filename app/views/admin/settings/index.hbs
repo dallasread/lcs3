@@ -1,19 +1,21 @@
-<form {{action submit="saveAttrs"}}>
+<div>
+	<form {{action submit="saveAttrs"}}>
 
-	<div class="field">
-		<label>Organization Name</label>
-		<input type="text" {{bind-attr value="settings.name"}}>
-	</div>
+		<div class="field">
+			<label>Organization Name</label>
+			<input type="text" {{bind-attr value="settings.name"}}>
+		</div>
 	
-	<div class="field">
-		<label>Which pages should <strong>show</strong> your chatbox?</label>
-		<input type="text" {{bind-attr value="settings.include"}}>
-	</div>
+		<div class="field">
+			<label>Which pages should <strong>show</strong> your chatbox?</label>
+			<input type="text" {{bind-attr value="settings.include"}}>
+		</div>
 
-	<div class="field">
-		<label>Which pages should <strong>hide</strong> your chatbox?</label>
-		<input type="text" {{bind-attr value="settings.exclude"}}>
-	</div>
+		<div class="field">
+			<label>Which pages should <strong>hide</strong> your chatbox?</label>
+			<input type="text" {{bind-attr value="settings.exclude"}}>
+		</div>
 
-	<button type="submit" class="full_width">Save Settings</button>
-</form>
+		<button type="submit" class="full_width">Save Settings</button>
+	</form>
+</div>

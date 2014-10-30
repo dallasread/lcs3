@@ -1,2 +1,2 @@
 Lively.Initializers.push ->
-	Lively.glob["chatbox"] = $("script[data-lively]").data("lively")
+	Lively.Glob["chatbox"] = $("script[data-lively]").data("lively")

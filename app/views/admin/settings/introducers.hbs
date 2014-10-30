@@ -1,36 +1,38 @@
-<p>Introducers are the things that go crazy and crazier. Triggers are the things that go crazy and crazier. Triggers are the things that go crazy and crazier.</p>
+<div>
+	<p>Introducers are the things that go crazy and crazier. Triggers are the things that go crazy and crazier. Triggers are the things that go crazy and crazier.</p>
 
-<table class="table">
-	<thead>
-		<tr>
-			<th>Name</th>
-			<th>Label</th>
-			<th>Required</th>
-			<th>Type</th>
-			<th>Validator</th>
-			<th>Ordinal</th>
-			<th>Delete</th>
-		</tr>
-	</thead>
-	<tbody>
-		{{#each introducers}}
+	<table class="table">
+		<thead>
 			<tr>
-				<td>{{{ id }}}</td>
-				<td>{{{ label }}}</td>
-				<td>{{#if required}}&check;{{/if}}</td>
-				<td>{{{ type }}}</td>
-				<td>{{{ validator }}}</td>
-				<td>{{{ ordinal }}}</td>
-				<td>
-					<button class="fluid_width small gray red_hover">
-						<i class="fa fa-trash"></i>
-					</button>
-				</td>
+				<th>Name</th>
+				<th>Label</th>
+				<th>Required</th>
+				<th>Type</th>
+				<th>Validator</th>
+				<th>Ordinal</th>
+				<th>Delete</th>
 			</tr>
-		{{/each}}
-	</tbody>
-</table>
+		</thead>
+		<tbody>
+			{{#each introducers}}
+				<tr>
+					<td>{{{ id }}}</td>
+					<td>{{{ label }}}</td>
+					<td>{{#if required}}&check;{{/if}}</td>
+					<td>{{{ type }}}</td>
+					<td>{{{ validator }}}</td>
+					<td>{{{ ordinal }}}</td>
+					<td>
+						<button class="fluid_width small gray red_hover">
+							<i class="fa fa-trash"></i>
+						</button>
+					</td>
+				</tr>
+			{{/each}}
+		</tbody>
+	</table>
 
-<div class="upper_space">
-	<button>Add Introducer</button>
+	<div class="upper_space">
+		<button>Add Introducer</button>
+	</div>
 </div>

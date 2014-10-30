@@ -1,34 +1,36 @@
-<p>Triggers are the things that go crazy and crazier. Triggers are the things that go crazy and crazier. Triggers are the things that go crazy and crazier.</p>
+<div>
+	<p>Triggers are the things that go crazy and crazier. Triggers are the things that go crazy and crazier. Triggers are the things that go crazy and crazier.</p>
 
-<table class="table">
-	<thead>
-		<tr>
-			<th>Active</th>
-			<th>Delay</th>
-			<th>Exclude</th>
-			<th>Include</th>
-			<th>Message</th>
-			<th>Delete</th>
-		</tr>
-	</thead>
-	<tbody>
-		{{#each triggers}}
+	<table class="table">
+		<thead>
 			<tr>
-				<td>{{{ active }}}</td>
-				<td>{{{ delay }}}</td>
-				<td>{{{ exclude }}}</td>
-				<td>{{{ include }}}</td>
-				<td>{{{ message.body }}}</td>
-				<td>
-					<button class="fluid_width small gray red_hover">
-						<i class="fa fa-trash"></i>
-					</button>
-				</td>
+				<th>Active</th>
+				<th>Delay</th>
+				<th>Exclude</th>
+				<th>Include</th>
+				<th>Message</th>
+				<th>Delete</th>
 			</tr>
-		{{/each}}
-	</tbody>
-</table>
+		</thead>
+		<tbody>
+			{{#each triggers}}
+				<tr>
+					<td>{{{ active }}}</td>
+					<td>{{{ delay }}}</td>
+					<td>{{{ exclude }}}</td>
+					<td>{{{ include }}}</td>
+					<td>{{{ message.body }}}</td>
+					<td>
+						<button class="fluid_width small gray red_hover">
+							<i class="fa fa-trash"></i>
+						</button>
+					</td>
+				</tr>
+			{{/each}}
+		</tbody>
+	</table>
 
-<div class="upper_space">
-	<button>Add Trigger</button>
+	<div class="upper_space">
+		<button>Add Trigger</button>
+	</div>
 </div>
