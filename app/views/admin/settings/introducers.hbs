@@ -5,7 +5,7 @@
 		<thead>
 			<tr>
 				<th>Name</th>
-				<th>Label</th>
+				<th>Permalink</th>
 				<th>Required</th>
 				<th>Type</th>
 				<th>Validator</th>
@@ -14,25 +14,11 @@
 			</tr>
 		</thead>
 		<tbody>
-			{{#each introducers}}
-				<tr>
-					<td>{{{ id }}}</td>
-					<td>{{{ label }}}</td>
-					<td>{{#if required}}&check;{{/if}}</td>
-					<td>{{{ type }}}</td>
-					<td>{{{ validator }}}</td>
-					<td>{{{ ordinal }}}</td>
-					<td>
-						<button class="fluid_width small gray red_hover">
-							<i class="fa fa-trash"></i>
-						</button>
-					</td>
-				</tr>
-			{{/each}}
+			{{render "introducers"}}
 		</tbody>
 	</table>
 
 	<div class="upper_space">
-		<button>Add Introducer</button>
+		<button {{action click="create"}}>Add Introducer</button>
 	</div>
 </div>

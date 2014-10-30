@@ -13,24 +13,11 @@
 			</tr>
 		</thead>
 		<tbody>
-			{{#each triggers}}
-				<tr>
-					<td>{{{ active }}}</td>
-					<td>{{{ delay }}}</td>
-					<td>{{{ exclude }}}</td>
-					<td>{{{ include }}}</td>
-					<td>{{{ message.body }}}</td>
-					<td>
-						<button class="fluid_width small gray red_hover">
-							<i class="fa fa-trash"></i>
-						</button>
-					</td>
-				</tr>
-			{{/each}}
+			{{render "triggers"}}
 		</tbody>
 	</table>
 
 	<div class="upper_space">
-		<button>Add Trigger</button>
+		<button {{action click="create"}}>Add Trigger</button>
 	</div>
 </div>

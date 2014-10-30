@@ -5414,7 +5414,7 @@ RDR = (function(_super) {
     r = this;
     m = this.Models[model];
     if (!variable && !("id" in where)) {
-      variable = this.pluralModel(model);
+      variable = this.pluralize(model);
     }
     if (!variable && "id" in where) {
       variable = model;
@@ -5456,7 +5456,7 @@ RDR = (function(_super) {
 
   _Class.prototype.deletebyPath = function(ds_path) {
     var r;
-    ds_path = this.slasherized(ds_path);
+    ds_path = this.slasherize(ds_path);
     r = this;
     return this.DS.child(ds_path).remove(function(error) {
       return r.DSCallback("delete", ds_path, false, error);
@@ -5464,12 +5464,17 @@ RDR = (function(_super) {
   };
 
   _Class.prototype.varPathToDSPath = function(path) {
-    var base_path, variable;
-    path = this.slasherized(path);
-    variable = ("" + path).split("/")[1];
-    base_path = this.varChart[variable];
-    if (typeof path !== "undefined") {
-      return "" + base_path + (path.split(variable)[1]);
+    var base_path, pluralize, slashed_path, variable;
+    slashed_path = this.slasherize(path);
+    variable = ("" + slashed_path).split("/")[1];
+    pluralize = this.pluralize(variable);
+    if (variable in this.varChart) {
+      base_path = this.varChart[variable];
+    } else if (pluralize in this.varChart) {
+      base_path = this.varChart[pluralize];
+    }
+    if (typeof base_path !== "undefined") {
+      return "" + base_path + (slashed_path.split(variable)[1]);
     } else {
       return false;
     }
@@ -5619,11 +5624,25 @@ RDR = (function(_super) {
 
   _Class.prototype.singularize = function(str) {
     if (("" + str).slice(-3) === "ies") {
-      return "" + (("" + str).slice(-3)) + "y";
+      return "" + (("" + str).slice(0, -3)) + "y";
     } else if (("" + str).slice(-1) === "s") {
-      return ("" + str).slice(-1);
+      return ("" + str).slice(0, -1);
     } else {
       return "" + str;
+    }
+  };
+
+  _Class.prototype.pluralize = function(str) {
+    if (str in this.Models && "plural" in this.Models[str]) {
+      return this.Models[str].plural;
+    } else {
+      if (("" + str).slice(-1) === "y") {
+        return "" + (str.slice(0, -1)) + "ies";
+      } else if (("" + str).slice(-1) === "s") {
+        return "" + str;
+      } else {
+        return "" + str + "s";
+      }
     }
   };
 
@@ -5640,7 +5659,7 @@ RDR = (function(_super) {
         if (attr === "event") {
           attrs += "data-rdr-bind-" + attr + "=\"" + key + "\" ";
         } else {
-          key = r.slasherized(key);
+          key = r.slasherize(key);
           if (in_loop) {
             key = "" + path + key;
           }
@@ -5680,7 +5699,8 @@ RDR = (function(_super) {
       if (typeof template !== "string") {
         first = collection[Object.keys(collection)[0]];
         path = r.singularize(typeof first !== "undefined" ? first._parent_key : variable);
-        template = "/partials/" + path;
+        path = r.slasherize(path);
+        template = "/partials" + path;
       }
       if (template in r.Templates) {
         output += "<script class=\"rdr-collection-first-" + variable + "\" data-template=\"" + template + "\"></script>";
@@ -5735,25 +5755,6 @@ RDR = (function(_super) {
 
   _Class.prototype.Error = function(a, b) {
     return this.Logger("error", a, b);
-  };
-
-  return _Class;
-
-})(RDR);
-
-RDR = (function(_super) {
-  __extends(_Class, _super);
-
-  function _Class() {
-    return _Class.__super__.constructor.apply(this, arguments);
-  }
-
-  _Class.prototype.pluralModel = function(model) {
-    if ("plural" in this.Models[model]) {
-      return this.Models[model].plural;
-    } else {
-      return "" + model + "s";
-    }
   };
 
   return _Class;
@@ -5887,27 +5888,32 @@ RDR = (function(_super) {
     if (synchronous == null) {
       synchronous = false;
     }
-    parent_key = this.slasherized(parent_key);
+    parent_key = this.slasherize(parent_key);
     if (!synchronous && parent_key.replace(/\//g, "").length && typeof parent_value === "object") {
       parent_value._path = parent_key;
       parent_value._parent_key = parent_value._path.substr(0, parent_value._path.lastIndexOf("/"));
     }
-    for (key in parent_value) {
-      value = parent_value[key];
-      var_key = "";
-      var_key += parent_key;
-      if (var_key.length) {
-        var_key += "/";
-      }
-      var_key += key;
-      if (typeof value === "object") {
-        value._path = this.slasherized(var_key);
-        value._parent_key = this.slasherized(parent_key);
-        this.prepareVars(var_key, value, synchronous);
-      } else {
-        this.setLocalVarByPath(this.Vars, var_key, value);
-        value = "<span data-rdr-bind-html='" + var_key + "'>" + value + "</span>";
-        this.setLocalVarByPath(this.synchronousVars, var_key, value);
+    if (typeof parent_value === "object" && !Object.keys(parent_value).length) {
+      this.setLocalVarByPath(this.Vars, parent_key, {});
+      this.setLocalVarByPath(this.synchronousVars, parent_key, {});
+    } else {
+      for (key in parent_value) {
+        value = parent_value[key];
+        var_key = "";
+        var_key += parent_key;
+        if (var_key.length) {
+          var_key += "/";
+        }
+        var_key += key;
+        if (typeof value === "object") {
+          value._path = this.slasherize(var_key);
+          value._parent_key = this.slasherize(parent_key);
+          this.prepareVars(var_key, value, synchronous);
+        } else {
+          this.setLocalVarByPath(this.Vars, var_key, value);
+          value = "<span data-rdr-bind-html='" + var_key + "'>" + value + "</span>";
+          this.setLocalVarByPath(this.synchronousVars, var_key, value);
+        }
       }
     }
     if (synchronous) {
@@ -5933,14 +5939,14 @@ RDR = (function(_super) {
   };
 
   _Class.prototype.deleteLocalVarByPath = function(path) {
-    path = this.dotterized("" + path);
+    path = this.dotterize("" + path);
     path = this.getLocalVarByPath(path);
     return this.deleteLocalVar(path);
   };
 
   _Class.prototype.deleteLocalVar = function(path_str) {
     var d, p, _i, _len, _ref;
-    path_str = this.dotterized("" + path_str);
+    path_str = this.dotterize("" + path_str);
     d = "delete this.Vars";
     _ref = path_str.split(".");
     for (_i = 0, _len = _ref.length; _i < _len; _i++) {
@@ -5958,7 +5964,7 @@ RDR = (function(_super) {
       clone = true;
     }
     o = "";
-    path_str = this.dotterized(path_str);
+    path_str = this.dotterize(path_str);
     path = path_str.split(".");
     if (clone) {
       Vars = $.extend({}, this.Vars);
@@ -5979,7 +5985,7 @@ RDR = (function(_super) {
 
   _Class.prototype.setLocalVarByPath = function(obj, path_str, value) {
     var elem, i, len, pList, path;
-    path_str = this.dotterized(path_str);
+    path_str = this.dotterize(path_str);
     path = path_str.split(".");
     pList = path;
     len = pList.length;
@@ -6008,7 +6014,7 @@ RDR = (function(_super) {
 
   _Class.prototype.isLoading = false;
 
-  _Class.prototype.slasherized = function(path) {
+  _Class.prototype.slasherize = function(path) {
     path = ("" + path).replace(/\./g, "/");
     if (path[0] !== "/") {
       path = "/" + path;
@@ -6016,7 +6022,7 @@ RDR = (function(_super) {
     return path;
   };
 
-  _Class.prototype.dotterized = function(path) {
+  _Class.prototype.dotterize = function(path) {
     path = ("" + path).replace(/\//g, ".");
     if (path[0] === ".") {
       path = path.slice(1);
@@ -6072,7 +6078,7 @@ RDR = (function(_super) {
     if (html == null) {
       html = "";
     }
-    view_path = this.slasherized(view_path);
+    view_path = this.slasherize(view_path);
     this.Log("Views", "Fetching: " + view_path);
     if ($("[data-rdr-template='" + view_path + "']").length && html !== "") {
       if (!placer.length) {
@@ -6097,7 +6103,7 @@ RDR = (function(_super) {
     if (data == null) {
       data = {};
     }
-    path = this.slasherized(path);
+    path = this.slasherize(path);
     data.outlet = "<div data-rdr-template-outlet=\"" + path + "\">" + data.outlet + "</div>";
     return "<div class=\"rdr-template\" data-rdr-template=\"" + path + "\">" + (template(data)) + "</div>";
   };
@@ -6108,7 +6114,7 @@ RDR = (function(_super) {
       data = {};
     }
     if (template in this.Templates) {
-      path = this.slasherized(path);
+      path = this.slasherize(path);
       html = $(this.Templates[template](data));
       html.attr("data-rdr-bind-model", path);
       html = $("<div>").html(html).html();
@@ -6119,11 +6125,11 @@ RDR = (function(_super) {
   };
 
   _Class.prototype.updateView = function(path, value) {
-    var html, k, model, placer, template, v, _i, _len, _results;
+    var html, k, model, placer, template, v, _results;
     if (value == null) {
       value = false;
     }
-    path = this.slasherized(path);
+    path = this.slasherize(path);
     model = typeof value === "object";
     if (!value) {
       return $("[data-rdr-bind-model='" + path + "']").remove();
@@ -6131,9 +6137,9 @@ RDR = (function(_super) {
       if (model) {
         if ($("[data-rdr-bind-model='" + path + "']").length) {
           _results = [];
-          for (v = _i = 0, _len = value.length; _i < _len; v = ++_i) {
-            k = value[v];
-            _results.push(this.updateVarOnPage(k, v));
+          for (k in value) {
+            v = value[k];
+            _results.push(this.updateVarOnPage("" + path + "/" + k, v));
           }
           return _results;
         } else {
@@ -6174,7 +6180,7 @@ RDR = (function(_super) {
     for (index = _i = 0, _len = segments.length; _i < _len; index = ++_i) {
       segment = segments[index];
       path = this.pathForSegments(segments, false, index);
-      path = this.slasherized(path);
+      path = this.slasherize(path);
       loading_path = ("" + path + "/loading").replace(/\/\//g, "/");
       this.Debug("Loading", "Fetching: " + path);
       this.Debug("Loading", "Load Path: " + loading_path);

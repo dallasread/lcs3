@@ -1,0 +1,12 @@
+<tr>
+	<td><input type="text" {{bind-attr value="active" event="blur"}}></td>
+	<td><input type="text" {{bind-attr value="delay" event="blur"}}></td>
+	<td><input type="text" {{bind-attr value="exclude" event="blur"}}></td>
+	<td><input type="text" {{bind-attr value="include" event="blur"}}></td>
+	<td><input type="text" {{bind-attr value="message.body" event="blur"}}></td>
+	<td>
+		<button class="fluid_width small gray red_hover" {{action click="delete"}}>
+			<i class="fa fa-trash"></i>
+		</button>
+	</td>
+</tr>

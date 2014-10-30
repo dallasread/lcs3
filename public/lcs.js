@@ -5415,7 +5415,7 @@ RDR = (function(_super) {
     r = this;
     m = this.Models[model];
     if (!variable && !("id" in where)) {
-      variable = this.pluralModel(model);
+      variable = this.pluralize(model);
     }
     if (!variable && "id" in where) {
       variable = model;
@@ -5457,7 +5457,7 @@ RDR = (function(_super) {
 
   _Class.prototype.deletebyPath = function(ds_path) {
     var r;
-    ds_path = this.slasherized(ds_path);
+    ds_path = this.slasherize(ds_path);
     r = this;
     return this.DS.child(ds_path).remove(function(error) {
       return r.DSCallback("delete", ds_path, false, error);
@@ -5465,12 +5465,17 @@ RDR = (function(_super) {
   };
 
   _Class.prototype.varPathToDSPath = function(path) {
-    var base_path, variable;
-    path = this.slasherized(path);
-    variable = ("" + path).split("/")[1];
-    base_path = this.varChart[variable];
-    if (typeof path !== "undefined") {
-      return "" + base_path + (path.split(variable)[1]);
+    var base_path, pluralize, slashed_path, variable;
+    slashed_path = this.slasherize(path);
+    variable = ("" + slashed_path).split("/")[1];
+    pluralize = this.pluralize(variable);
+    if (variable in this.varChart) {
+      base_path = this.varChart[variable];
+    } else if (pluralize in this.varChart) {
+      base_path = this.varChart[pluralize];
+    }
+    if (typeof base_path !== "undefined") {
+      return "" + base_path + (slashed_path.split(variable)[1]);
     } else {
       return false;
     }
@@ -5620,11 +5625,25 @@ RDR = (function(_super) {
 
   _Class.prototype.singularize = function(str) {
     if (("" + str).slice(-3) === "ies") {
-      return "" + (("" + str).slice(-3)) + "y";
+      return "" + (("" + str).slice(0, -3)) + "y";
     } else if (("" + str).slice(-1) === "s") {
-      return ("" + str).slice(-1);
+      return ("" + str).slice(0, -1);
     } else {
       return "" + str;
+    }
+  };
+
+  _Class.prototype.pluralize = function(str) {
+    if (str in this.Models && "plural" in this.Models[str]) {
+      return this.Models[str].plural;
+    } else {
+      if (("" + str).slice(-1) === "y") {
+        return "" + (str.slice(0, -1)) + "ies";
+      } else if (("" + str).slice(-1) === "s") {
+        return "" + str;
+      } else {
+        return "" + str + "s";
+      }
     }
   };
 
@@ -5641,7 +5660,7 @@ RDR = (function(_super) {
         if (attr === "event") {
           attrs += "data-rdr-bind-" + attr + "=\"" + key + "\" ";
         } else {
-          key = r.slasherized(key);
+          key = r.slasherize(key);
           if (in_loop) {
             key = "" + path + key;
           }
@@ -5681,7 +5700,8 @@ RDR = (function(_super) {
       if (typeof template !== "string") {
         first = collection[Object.keys(collection)[0]];
         path = r.singularize(typeof first !== "undefined" ? first._parent_key : variable);
-        template = "/partials/" + path;
+        path = r.slasherize(path);
+        template = "/partials" + path;
       }
       if (template in r.Templates) {
         output += "<script class=\"rdr-collection-first-" + variable + "\" data-template=\"" + template + "\"></script>";
@@ -5736,25 +5756,6 @@ RDR = (function(_super) {
 
   _Class.prototype.Error = function(a, b) {
     return this.Logger("error", a, b);
-  };
-
-  return _Class;
-
-})(RDR);
-
-RDR = (function(_super) {
-  __extends(_Class, _super);
-
-  function _Class() {
-    return _Class.__super__.constructor.apply(this, arguments);
-  }
-
-  _Class.prototype.pluralModel = function(model) {
-    if ("plural" in this.Models[model]) {
-      return this.Models[model].plural;
-    } else {
-      return "" + model + "s";
-    }
   };
 
   return _Class;
@@ -5888,27 +5889,32 @@ RDR = (function(_super) {
     if (synchronous == null) {
       synchronous = false;
     }
-    parent_key = this.slasherized(parent_key);
+    parent_key = this.slasherize(parent_key);
     if (!synchronous && parent_key.replace(/\//g, "").length && typeof parent_value === "object") {
       parent_value._path = parent_key;
       parent_value._parent_key = parent_value._path.substr(0, parent_value._path.lastIndexOf("/"));
     }
-    for (key in parent_value) {
-      value = parent_value[key];
-      var_key = "";
-      var_key += parent_key;
-      if (var_key.length) {
-        var_key += "/";
-      }
-      var_key += key;
-      if (typeof value === "object") {
-        value._path = this.slasherized(var_key);
-        value._parent_key = this.slasherized(parent_key);
-        this.prepareVars(var_key, value, synchronous);
-      } else {
-        this.setLocalVarByPath(this.Vars, var_key, value);
-        value = "<span data-rdr-bind-html='" + var_key + "'>" + value + "</span>";
-        this.setLocalVarByPath(this.synchronousVars, var_key, value);
+    if (typeof parent_value === "object" && !Object.keys(parent_value).length) {
+      this.setLocalVarByPath(this.Vars, parent_key, {});
+      this.setLocalVarByPath(this.synchronousVars, parent_key, {});
+    } else {
+      for (key in parent_value) {
+        value = parent_value[key];
+        var_key = "";
+        var_key += parent_key;
+        if (var_key.length) {
+          var_key += "/";
+        }
+        var_key += key;
+        if (typeof value === "object") {
+          value._path = this.slasherize(var_key);
+          value._parent_key = this.slasherize(parent_key);
+          this.prepareVars(var_key, value, synchronous);
+        } else {
+          this.setLocalVarByPath(this.Vars, var_key, value);
+          value = "<span data-rdr-bind-html='" + var_key + "'>" + value + "</span>";
+          this.setLocalVarByPath(this.synchronousVars, var_key, value);
+        }
       }
     }
     if (synchronous) {
@@ -5934,14 +5940,14 @@ RDR = (function(_super) {
   };
 
   _Class.prototype.deleteLocalVarByPath = function(path) {
-    path = this.dotterized("" + path);
+    path = this.dotterize("" + path);
     path = this.getLocalVarByPath(path);
     return this.deleteLocalVar(path);
   };
 
   _Class.prototype.deleteLocalVar = function(path_str) {
     var d, p, _i, _len, _ref;
-    path_str = this.dotterized("" + path_str);
+    path_str = this.dotterize("" + path_str);
     d = "delete this.Vars";
     _ref = path_str.split(".");
     for (_i = 0, _len = _ref.length; _i < _len; _i++) {
@@ -5959,7 +5965,7 @@ RDR = (function(_super) {
       clone = true;
     }
     o = "";
-    path_str = this.dotterized(path_str);
+    path_str = this.dotterize(path_str);
     path = path_str.split(".");
     if (clone) {
       Vars = $.extend({}, this.Vars);
@@ -5980,7 +5986,7 @@ RDR = (function(_super) {
 
   _Class.prototype.setLocalVarByPath = function(obj, path_str, value) {
     var elem, i, len, pList, path;
-    path_str = this.dotterized(path_str);
+    path_str = this.dotterize(path_str);
     path = path_str.split(".");
     pList = path;
     len = pList.length;
@@ -6009,7 +6015,7 @@ RDR = (function(_super) {
 
   _Class.prototype.isLoading = false;
 
-  _Class.prototype.slasherized = function(path) {
+  _Class.prototype.slasherize = function(path) {
     path = ("" + path).replace(/\./g, "/");
     if (path[0] !== "/") {
       path = "/" + path;
@@ -6017,7 +6023,7 @@ RDR = (function(_super) {
     return path;
   };
 
-  _Class.prototype.dotterized = function(path) {
+  _Class.prototype.dotterize = function(path) {
     path = ("" + path).replace(/\//g, ".");
     if (path[0] === ".") {
       path = path.slice(1);
@@ -6073,7 +6079,7 @@ RDR = (function(_super) {
     if (html == null) {
       html = "";
     }
-    view_path = this.slasherized(view_path);
+    view_path = this.slasherize(view_path);
     this.Log("Views", "Fetching: " + view_path);
     if ($("[data-rdr-template='" + view_path + "']").length && html !== "") {
       if (!placer.length) {
@@ -6098,7 +6104,7 @@ RDR = (function(_super) {
     if (data == null) {
       data = {};
     }
-    path = this.slasherized(path);
+    path = this.slasherize(path);
     data.outlet = "<div data-rdr-template-outlet=\"" + path + "\">" + data.outlet + "</div>";
     return "<div class=\"rdr-template\" data-rdr-template=\"" + path + "\">" + (template(data)) + "</div>";
   };
@@ -6109,7 +6115,7 @@ RDR = (function(_super) {
       data = {};
     }
     if (template in this.Templates) {
-      path = this.slasherized(path);
+      path = this.slasherize(path);
       html = $(this.Templates[template](data));
       html.attr("data-rdr-bind-model", path);
       html = $("<div>").html(html).html();
@@ -6120,11 +6126,11 @@ RDR = (function(_super) {
   };
 
   _Class.prototype.updateView = function(path, value) {
-    var html, k, model, placer, template, v, _i, _len, _results;
+    var html, k, model, placer, template, v, _results;
     if (value == null) {
       value = false;
     }
-    path = this.slasherized(path);
+    path = this.slasherize(path);
     model = typeof value === "object";
     if (!value) {
       return $("[data-rdr-bind-model='" + path + "']").remove();
@@ -6132,9 +6138,9 @@ RDR = (function(_super) {
       if (model) {
         if ($("[data-rdr-bind-model='" + path + "']").length) {
           _results = [];
-          for (v = _i = 0, _len = value.length; _i < _len; v = ++_i) {
-            k = value[v];
-            _results.push(this.updateVarOnPage(k, v));
+          for (k in value) {
+            v = value[k];
+            _results.push(this.updateVarOnPage("" + path + "/" + k, v));
           }
           return _results;
         } else {
@@ -6175,7 +6181,7 @@ RDR = (function(_super) {
     for (index = _i = 0, _len = segments.length; _i < _len; index = ++_i) {
       segment = segments[index];
       path = this.pathForSegments(segments, false, index);
-      path = this.slasherized(path);
+      path = this.slasherize(path);
       loading_path = ("" + path + "/loading").replace(/\/\//g, "/");
       this.Debug("Loading", "Fetching: " + path);
       this.Debug("Loading", "Load Path: " + loading_path);
@@ -8808,27 +8814,6 @@ this["RDR"]["prototype"]["Templates"]["/admin/agents"] = Handlebars.template({"1
 
 
 
-this["RDR"]["prototype"]["Templates"]["/admin/canned/single"] = Handlebars.template({"compiler":[6,">= 2.0.0-beta.1"],"main":function(depth0,helpers,partials,data) {
-  var helperMissing=helpers.helperMissing, escapeExpression=this.escapeExpression;
-  return "<tr>\n<td class=\"header_column align_center\">\n<span class=\"canned_hash\">#</span>\n<input type=\"text\" "
-    + escapeExpression(((helpers['bind-attr'] || (depth0 && depth0['bind-attr']) || helperMissing).call(depth0, {"name":"bind-attr","hash":{
-    'event': ("blur"),
-    'value': ("hash")
-  },"data":data})))
-    + " class=\"has_canned_hash\">\n</td>\n<td><input type=\"text\" "
-    + escapeExpression(((helpers['bind-attr'] || (depth0 && depth0['bind-attr']) || helperMissing).call(depth0, {"name":"bind-attr","hash":{
-    'event': ("blur"),
-    'value': ("message.body")
-  },"data":data})))
-    + "></td>\n<td class=\"align_right\">\n<button class=\"fluid_width small gray red_hover\" "
-    + escapeExpression(((helpers.action || (depth0 && depth0.action) || helperMissing).call(depth0, {"name":"action","hash":{
-    'click': ("delete")
-  },"data":data})))
-    + ">\n<i class=\"fa fa-trash\"></i>\n</button>\n</td>\n</tr>\n";
-},"useData":true});
-
-
-
 this["RDR"]["prototype"]["Templates"]["/admin/index"] = Handlebars.template({"compiler":[6,">= 2.0.0-beta.1"],"main":function(depth0,helpers,partials,data) {
   return "<div class=\"pane\">\nThis is main admin tab.\n</div>\n";
   },"useData":true});
@@ -8853,7 +8838,7 @@ this["RDR"]["prototype"]["Templates"]["/admin/settings"] = Handlebars.template({
 this["RDR"]["prototype"]["Templates"]["/admin/settings/canned"] = Handlebars.template({"compiler":[6,">= 2.0.0-beta.1"],"main":function(depth0,helpers,partials,data) {
   var helperMissing=helpers.helperMissing, escapeExpression=this.escapeExpression;
   return "<div>\n<p>Canned are the things that go crazy and crazier. Triggers are the things that go crazy and crazier. Triggers are the things that go crazy and crazier.</p>\n\n<table class=\"table\">\n<thead>\n<tr>\n<th style=\"width: 19%; \" class=\"align_center\">Shortcut</th>\n<th style=\"width: 71%; \">Message</th>\n<th style=\"width: 10%; \"></th>\n</tr>\n</thead>\n<tbody>\n"
-    + escapeExpression(((helpers.render || (depth0 && depth0.render) || helperMissing).call(depth0, "canned", "/admin/canned/single", {"name":"render","hash":{},"data":data})))
+    + escapeExpression(((helpers.render || (depth0 && depth0.render) || helperMissing).call(depth0, "canned", {"name":"render","hash":{},"data":data})))
     + "\n</tbody>\n</table>\n\n<div class=\"upper_space\">\n<button "
     + escapeExpression(((helpers.action || (depth0 && depth0.action) || helperMissing).call(depth0, {"name":"action","hash":{
     'click': ("create")
@@ -8886,33 +8871,15 @@ this["RDR"]["prototype"]["Templates"]["/admin/settings/index"] = Handlebars.temp
 
 
 
-this["RDR"]["prototype"]["Templates"]["/admin/settings/introducers"] = Handlebars.template({"1":function(depth0,helpers,partials,data) {
-  var stack1, helper, functionType="function", helperMissing=helpers.helperMissing, buffer = "<tr>\n<td>";
-  stack1 = ((helper = (helper = helpers.id || (depth0 != null ? depth0.id : depth0)) != null ? helper : helperMissing),(typeof helper === functionType ? helper.call(depth0, {"name":"id","hash":{},"data":data}) : helper));
-  if (stack1 != null) { buffer += stack1; }
-  buffer += "</td>\n<td>";
-  stack1 = ((helper = (helper = helpers.label || (depth0 != null ? depth0.label : depth0)) != null ? helper : helperMissing),(typeof helper === functionType ? helper.call(depth0, {"name":"label","hash":{},"data":data}) : helper));
-  if (stack1 != null) { buffer += stack1; }
-  buffer += "</td>\n<td>";
-  stack1 = helpers['if'].call(depth0, (depth0 != null ? depth0.required : depth0), {"name":"if","hash":{},"fn":this.program(2, data),"inverse":this.noop,"data":data});
-  if (stack1 != null) { buffer += stack1; }
-  buffer += "</td>\n<td>";
-  stack1 = ((helper = (helper = helpers.type || (depth0 != null ? depth0.type : depth0)) != null ? helper : helperMissing),(typeof helper === functionType ? helper.call(depth0, {"name":"type","hash":{},"data":data}) : helper));
-  if (stack1 != null) { buffer += stack1; }
-  buffer += "</td>\n<td>";
-  stack1 = ((helper = (helper = helpers.validator || (depth0 != null ? depth0.validator : depth0)) != null ? helper : helperMissing),(typeof helper === functionType ? helper.call(depth0, {"name":"validator","hash":{},"data":data}) : helper));
-  if (stack1 != null) { buffer += stack1; }
-  buffer += "</td>\n<td>";
-  stack1 = ((helper = (helper = helpers.ordinal || (depth0 != null ? depth0.ordinal : depth0)) != null ? helper : helperMissing),(typeof helper === functionType ? helper.call(depth0, {"name":"ordinal","hash":{},"data":data}) : helper));
-  if (stack1 != null) { buffer += stack1; }
-  return buffer + "</td>\n<td>\n<button class=\"fluid_width small gray red_hover\">\n<i class=\"fa fa-trash\"></i>\n</button>\n</td>\n</tr>\n";
-},"2":function(depth0,helpers,partials,data) {
-  return "&check;";
-  },"compiler":[6,">= 2.0.0-beta.1"],"main":function(depth0,helpers,partials,data) {
-  var stack1, buffer = "<div>\n<p>Introducers are the things that go crazy and crazier. Triggers are the things that go crazy and crazier. Triggers are the things that go crazy and crazier.</p>\n\n<table class=\"table\">\n<thead>\n<tr>\n<th>Name</th>\n<th>Label</th>\n<th>Required</th>\n<th>Type</th>\n<th>Validator</th>\n<th>Ordinal</th>\n<th>Delete</th>\n</tr>\n</thead>\n<tbody>\n";
-  stack1 = helpers.each.call(depth0, (depth0 != null ? depth0.introducers : depth0), {"name":"each","hash":{},"fn":this.program(1, data),"inverse":this.noop,"data":data});
-  if (stack1 != null) { buffer += stack1; }
-  return buffer + "</tbody>\n</table>\n\n<div class=\"upper_space\">\n<button>Add Introducer</button>\n</div>\n</div>\n";
+this["RDR"]["prototype"]["Templates"]["/admin/settings/introducers"] = Handlebars.template({"compiler":[6,">= 2.0.0-beta.1"],"main":function(depth0,helpers,partials,data) {
+  var helperMissing=helpers.helperMissing, escapeExpression=this.escapeExpression;
+  return "<div>\n<p>Introducers are the things that go crazy and crazier. Triggers are the things that go crazy and crazier. Triggers are the things that go crazy and crazier.</p>\n\n<table class=\"table\">\n<thead>\n<tr>\n<th>Name</th>\n<th>Permalink</th>\n<th>Required</th>\n<th>Type</th>\n<th>Validator</th>\n<th>Ordinal</th>\n<th>Delete</th>\n</tr>\n</thead>\n<tbody>\n"
+    + escapeExpression(((helpers.render || (depth0 && depth0.render) || helperMissing).call(depth0, "introducers", {"name":"render","hash":{},"data":data})))
+    + "\n</tbody>\n</table>\n\n<div class=\"upper_space\">\n<button "
+    + escapeExpression(((helpers.action || (depth0 && depth0.action) || helperMissing).call(depth0, {"name":"action","hash":{
+    'click': ("create")
+  },"data":data})))
+    + ">Add Introducer</button>\n</div>\n</div>\n";
 },"useData":true});
 
 
@@ -8929,28 +8896,15 @@ this["RDR"]["prototype"]["Templates"]["/admin/settings/me"] = Handlebars.templat
 
 
 
-this["RDR"]["prototype"]["Templates"]["/admin/settings/triggers"] = Handlebars.template({"1":function(depth0,helpers,partials,data) {
-  var stack1, helper, functionType="function", helperMissing=helpers.helperMissing, lambda=this.lambda, buffer = "<tr>\n<td>";
-  stack1 = ((helper = (helper = helpers.active || (depth0 != null ? depth0.active : depth0)) != null ? helper : helperMissing),(typeof helper === functionType ? helper.call(depth0, {"name":"active","hash":{},"data":data}) : helper));
-  if (stack1 != null) { buffer += stack1; }
-  buffer += "</td>\n<td>";
-  stack1 = ((helper = (helper = helpers.delay || (depth0 != null ? depth0.delay : depth0)) != null ? helper : helperMissing),(typeof helper === functionType ? helper.call(depth0, {"name":"delay","hash":{},"data":data}) : helper));
-  if (stack1 != null) { buffer += stack1; }
-  buffer += "</td>\n<td>";
-  stack1 = ((helper = (helper = helpers.exclude || (depth0 != null ? depth0.exclude : depth0)) != null ? helper : helperMissing),(typeof helper === functionType ? helper.call(depth0, {"name":"exclude","hash":{},"data":data}) : helper));
-  if (stack1 != null) { buffer += stack1; }
-  buffer += "</td>\n<td>";
-  stack1 = ((helper = (helper = helpers.include || (depth0 != null ? depth0.include : depth0)) != null ? helper : helperMissing),(typeof helper === functionType ? helper.call(depth0, {"name":"include","hash":{},"data":data}) : helper));
-  if (stack1 != null) { buffer += stack1; }
-  buffer += "</td>\n<td>";
-  stack1 = lambda(((stack1 = (depth0 != null ? depth0.message : depth0)) != null ? stack1.body : stack1), depth0);
-  if (stack1 != null) { buffer += stack1; }
-  return buffer + "</td>\n<td>\n<button class=\"fluid_width small gray red_hover\">\n<i class=\"fa fa-trash\"></i>\n</button>\n</td>\n</tr>\n";
-},"compiler":[6,">= 2.0.0-beta.1"],"main":function(depth0,helpers,partials,data) {
-  var stack1, buffer = "<div>\n<p>Triggers are the things that go crazy and crazier. Triggers are the things that go crazy and crazier. Triggers are the things that go crazy and crazier.</p>\n\n<table class=\"table\">\n<thead>\n<tr>\n<th>Active</th>\n<th>Delay</th>\n<th>Exclude</th>\n<th>Include</th>\n<th>Message</th>\n<th>Delete</th>\n</tr>\n</thead>\n<tbody>\n";
-  stack1 = helpers.each.call(depth0, (depth0 != null ? depth0.triggers : depth0), {"name":"each","hash":{},"fn":this.program(1, data),"inverse":this.noop,"data":data});
-  if (stack1 != null) { buffer += stack1; }
-  return buffer + "</tbody>\n</table>\n\n<div class=\"upper_space\">\n<button>Add Trigger</button>\n</div>\n</div>\n";
+this["RDR"]["prototype"]["Templates"]["/admin/settings/triggers"] = Handlebars.template({"compiler":[6,">= 2.0.0-beta.1"],"main":function(depth0,helpers,partials,data) {
+  var helperMissing=helpers.helperMissing, escapeExpression=this.escapeExpression;
+  return "<div>\n<p>Triggers are the things that go crazy and crazier. Triggers are the things that go crazy and crazier. Triggers are the things that go crazy and crazier.</p>\n\n<table class=\"table\">\n<thead>\n<tr>\n<th>Active</th>\n<th>Delay</th>\n<th>Exclude</th>\n<th>Include</th>\n<th>Message</th>\n<th>Delete</th>\n</tr>\n</thead>\n<tbody>\n"
+    + escapeExpression(((helpers.render || (depth0 && depth0.render) || helperMissing).call(depth0, "triggers", {"name":"render","hash":{},"data":data})))
+    + "\n</tbody>\n</table>\n\n<div class=\"upper_space\">\n<button "
+    + escapeExpression(((helpers.action || (depth0 && depth0.action) || helperMissing).call(depth0, {"name":"action","hash":{
+    'click': ("create")
+  },"data":data})))
+    + ">Add Trigger</button>\n</div>\n</div>\n";
 },"useData":true});
 
 
@@ -8973,9 +8927,7 @@ this["RDR"]["prototype"]["Templates"]["/admin/visitors"] = Handlebars.template({
   buffer += " ";
   stack1 = helpers['if'].call(depth0, (depth0 != null ? depth0.has_unread : depth0), {"name":"if","hash":{},"fn":this.program(4, data),"inverse":this.noop,"data":data});
   if (stack1 != null) { buffer += stack1; }
-  buffer += "\">\n<span class=\"name\">\n"
-    + escapeExpression(((helper = (helper = helpers._path || (depth0 != null ? depth0._path : depth0)) != null ? helper : helperMissing),(typeof helper === functionType ? helper.call(depth0, {"name":"_path","hash":{},"data":data}) : helper)))
-    + "\n<span >";
+  buffer += "\">\n<span class=\"name\">\n<span >";
   stack1 = ((helper = (helper = helpers.name || (depth0 != null ? depth0.name : depth0)) != null ? helper : helperMissing),(typeof helper === functionType ? helper.call(depth0, {"name":"name","hash":{},"data":data}) : helper));
   if (stack1 != null) { buffer += stack1; }
   return buffer + "</span>\n</span>\n<span class=\"icons\">\n<i title=\"Apple\" class=\"fa fa-apple\"></i>\n<i title=\"Windows\" class=\"fa fa-windows\"></i>\n<i title=\"Canada\" class=\"fa fa-flag\"></i>\n</span>\n<span class=\"last_seen\">\n<span >3 hours ago</span>\n</span>\n<span class=\"clear\"></span>\n</a>\n";
@@ -9101,6 +9053,104 @@ this["RDR"]["prototype"]["Templates"]["/chatbox"] = Handlebars.template({"1":fun
 this["RDR"]["prototype"]["Templates"]["/loading"] = Handlebars.template({"compiler":[6,">= 2.0.0-beta.1"],"main":function(depth0,helpers,partials,data) {
   return "<div class=\"application_loading loading\"></div>\n";
   },"useData":true});
+
+
+
+this["RDR"]["prototype"]["Templates"]["/partials/canned"] = Handlebars.template({"compiler":[6,">= 2.0.0-beta.1"],"main":function(depth0,helpers,partials,data) {
+  var helperMissing=helpers.helperMissing, escapeExpression=this.escapeExpression;
+  return "<tr>\n<td class=\"header_column align_center\">\n<span class=\"canned_hash\">#</span>\n<input type=\"text\" "
+    + escapeExpression(((helpers['bind-attr'] || (depth0 && depth0['bind-attr']) || helperMissing).call(depth0, {"name":"bind-attr","hash":{
+    'event': ("blur"),
+    'value': ("hash")
+  },"data":data})))
+    + " class=\"has_canned_hash\">\n</td>\n<td><input type=\"text\" "
+    + escapeExpression(((helpers['bind-attr'] || (depth0 && depth0['bind-attr']) || helperMissing).call(depth0, {"name":"bind-attr","hash":{
+    'event': ("blur"),
+    'value': ("message.body")
+  },"data":data})))
+    + "></td>\n<td class=\"align_right\">\n<button class=\"fluid_width small gray red_hover\" "
+    + escapeExpression(((helpers.action || (depth0 && depth0.action) || helperMissing).call(depth0, {"name":"action","hash":{
+    'click': ("delete")
+  },"data":data})))
+    + ">\n<i class=\"fa fa-trash\"></i>\n</button>\n</td>\n</tr>\n";
+},"useData":true});
+
+
+
+this["RDR"]["prototype"]["Templates"]["/partials/introducer"] = Handlebars.template({"compiler":[6,">= 2.0.0-beta.1"],"main":function(depth0,helpers,partials,data) {
+  var helperMissing=helpers.helperMissing, escapeExpression=this.escapeExpression;
+  return "<tr>\n<td><input type=\"text\" "
+    + escapeExpression(((helpers['bind-attr'] || (depth0 && depth0['bind-attr']) || helperMissing).call(depth0, {"name":"bind-attr","hash":{
+    'event': ("blur"),
+    'value': ("name")
+  },"data":data})))
+    + "></td>\n<td><input type=\"text\" "
+    + escapeExpression(((helpers['bind-attr'] || (depth0 && depth0['bind-attr']) || helperMissing).call(depth0, {"name":"bind-attr","hash":{
+    'event': ("blur"),
+    'value': ("permalink")
+  },"data":data})))
+    + "></td>\n<td><input type=\"text\" "
+    + escapeExpression(((helpers['bind-attr'] || (depth0 && depth0['bind-attr']) || helperMissing).call(depth0, {"name":"bind-attr","hash":{
+    'event': ("blur"),
+    'value': ("required")
+  },"data":data})))
+    + "></td>\n<td><input type=\"text\" "
+    + escapeExpression(((helpers['bind-attr'] || (depth0 && depth0['bind-attr']) || helperMissing).call(depth0, {"name":"bind-attr","hash":{
+    'event': ("blur"),
+    'value': ("type")
+  },"data":data})))
+    + "></td>\n<td><input type=\"text\" "
+    + escapeExpression(((helpers['bind-attr'] || (depth0 && depth0['bind-attr']) || helperMissing).call(depth0, {"name":"bind-attr","hash":{
+    'event': ("blur"),
+    'value': ("validator")
+  },"data":data})))
+    + "></td>\n<td><input type=\"text\" "
+    + escapeExpression(((helpers['bind-attr'] || (depth0 && depth0['bind-attr']) || helperMissing).call(depth0, {"name":"bind-attr","hash":{
+    'event': ("blur"),
+    'value': ("ordinal")
+  },"data":data})))
+    + "></td>\n<td>\n<button class=\"fluid_width small gray red_hover\" "
+    + escapeExpression(((helpers.action || (depth0 && depth0.action) || helperMissing).call(depth0, {"name":"action","hash":{
+    'click': ("delete")
+  },"data":data})))
+    + ">\n<i class=\"fa fa-trash\"></i>\n</button>\n</td>\n</tr>\n";
+},"useData":true});
+
+
+
+this["RDR"]["prototype"]["Templates"]["/partials/trigger"] = Handlebars.template({"compiler":[6,">= 2.0.0-beta.1"],"main":function(depth0,helpers,partials,data) {
+  var helperMissing=helpers.helperMissing, escapeExpression=this.escapeExpression;
+  return "<tr>\n<td><input type=\"text\" "
+    + escapeExpression(((helpers['bind-attr'] || (depth0 && depth0['bind-attr']) || helperMissing).call(depth0, {"name":"bind-attr","hash":{
+    'event': ("blur"),
+    'value': ("active")
+  },"data":data})))
+    + "></td>\n<td><input type=\"text\" "
+    + escapeExpression(((helpers['bind-attr'] || (depth0 && depth0['bind-attr']) || helperMissing).call(depth0, {"name":"bind-attr","hash":{
+    'event': ("blur"),
+    'value': ("delay")
+  },"data":data})))
+    + "></td>\n<td><input type=\"text\" "
+    + escapeExpression(((helpers['bind-attr'] || (depth0 && depth0['bind-attr']) || helperMissing).call(depth0, {"name":"bind-attr","hash":{
+    'event': ("blur"),
+    'value': ("exclude")
+  },"data":data})))
+    + "></td>\n<td><input type=\"text\" "
+    + escapeExpression(((helpers['bind-attr'] || (depth0 && depth0['bind-attr']) || helperMissing).call(depth0, {"name":"bind-attr","hash":{
+    'event': ("blur"),
+    'value': ("include")
+  },"data":data})))
+    + "></td>\n<td><input type=\"text\" "
+    + escapeExpression(((helpers['bind-attr'] || (depth0 && depth0['bind-attr']) || helperMissing).call(depth0, {"name":"bind-attr","hash":{
+    'event': ("blur"),
+    'value': ("message.body")
+  },"data":data})))
+    + "></td>\n<td>\n<button class=\"fluid_width small gray red_hover\" "
+    + escapeExpression(((helpers.action || (depth0 && depth0.action) || helperMissing).call(depth0, {"name":"action","hash":{
+    'click': ("delete")
+  },"data":data})))
+    + ">\n<i class=\"fa fa-trash\"></i>\n</button>\n</td>\n</tr>\n";
+},"useData":true});
 this.Lively = new RDR;
 
 Lively.Config = {
@@ -9192,6 +9242,18 @@ Lively.Controllers["/admin/settings/introducers"] = {
     return Lively.find("introducer", {
       chatbox: Lively.Glob["chatbox"]
     });
+  },
+  actions: {
+    create: function() {
+      return Lively.create("introducer", {
+        name: "",
+        label: "",
+        required: false,
+        type: "text",
+        validator: "",
+        ordinal: "introducers" in Lively.Vars ? Object.keys(Lively.Vars.introducers).length : 0
+      });
+    }
   }
 };
 
@@ -9200,6 +9262,19 @@ Lively.Controllers["/admin/settings/triggers"] = {
     return Lively.find("trigger", {
       chatbox: Lively.Glob["chatbox"]
     });
+  },
+  actions: {
+    create: function() {
+      return Lively.create("trigger", {
+        delay: 1000,
+        active: false,
+        exclude: "",
+        include: "*",
+        message: {
+          body: ""
+        }
+      });
+    }
   }
 };
 
@@ -9265,10 +9340,12 @@ Lively.Models["introducer"] = {
   dataPath: "introducers/{{chatbox}}",
   fields: {
     chatbox: "belongs_to",
-    label: "string",
+    name: "string",
+    permalink: "string",
     type: "string",
     required: "boolean",
-    validator: "string"
+    validator: "string",
+    ordinal: "integer"
   }
 };
 

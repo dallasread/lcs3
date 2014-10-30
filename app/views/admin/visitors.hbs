@@ -7,7 +7,6 @@
 		{{#each visitors}}
 			<a {{bind-attr href="id" path=_path}} class="visitor {{#if online}}online{{/if}} {{#if has_unread}}has_unread{{/if}}">
 				<span class="name">
-					{{ _path }}
 					<span {{!bind-attr title=email}}>{{{ name }}}</span>
 				</span>
 				<span class="icons">
