@@ -1,4 +1,4 @@
-<a {{bind-attr href="#/admin/visitors/{{ id }}"}} class="visitor {{#if online}}online{{/if}} {{#if has_unread}}has_unread{{/if}}">
+<a {{bind-attr href="#/admin/visitors/{{ _key }}"}} class="visitor {{#if online}}online{{/if}} {{#if has_unread}}has_unread{{/if}}">
 	<span class="name">
 		<span {{bind-attr title="email"}}>{{{ name }}}</span>
 	</span>

@@ -1,5 +1,5 @@
 Lively.Controllers["/admin/agents"] =
-	init: ->
+	before: ->
 		Lively.find "agent", { chatbox: Lively.Glob["chatbox"] }
 	
 	actions:

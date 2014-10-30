@@ -1,3 +1,3 @@
 Lively.Controllers["/admin/visitors"] =
-	init: ->
+	before: ->
 		Lively.find "visitor", { chatbox: Lively.Glob["chatbox"] }

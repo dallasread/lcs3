@@ -1,9 +1,9 @@
 <tr>
 	<td class="header_column align_center">
 		<span class="canned_hash">#</span>
-		<input type="text" {{bind-attr value="hash" event="blur"}} class="has_canned_hash">
+		<input type="text" {{bind-attr value="hash" event="blur"}} class="has_canned_hash" placeholder="shortcut">
 	</td>
-	<td><input type="text" {{bind-attr value="message.body" event="blur"}}></td>
+	<td><input type="text" {{bind-attr value="message.body" event="blur"}} placeholder="What would you like to say?"></td>
 	<td class="align_right">
 		<button class="fluid_width small gray red_hover" {{action click="delete"}}>
 			<i class="fa fa-trash"></i>

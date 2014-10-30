@@ -1,5 +1,5 @@
 Lively.Controllers["/admin"] =
-	init: ->
+	before: ->
 		$("body").addClass "lcs-fixed"
 		Lively.find "chatbox", { id: Lively.Glob["chatbox"] }, "settings"
 		
@@ -13,4 +13,4 @@ Lively.Controllers["/admin"] =
 		
 		delete: (element, data) ->
 			if confirm "Are you sure you want to delete this?"
-				Lively.delete data
+				Lively.delete data._path

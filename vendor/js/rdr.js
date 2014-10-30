@@ -5350,7 +5350,7 @@ RDR = (function(_super) {
     return _Class.__super__.constructor.apply(this, arguments);
   }
 
-  _Class.prototype.initControllers = function(controllers) {
+  _Class.prototype.initControllers = function(controllers, call) {
     var c, index, initializers, path, r, _i, _len;
     initializers = [];
     for (index = _i = 0, _len = controllers.length; _i < _len; index = ++_i) {
@@ -5360,13 +5360,14 @@ RDR = (function(_super) {
         path = "/application";
       }
       this.Log("Controllers", "Fetching: " + path);
-      if (path in this.Controllers && "init" in this.Controllers[path]) {
+      if (path in this.Controllers && call in this.Controllers[path]) {
         initializers.push(path);
+        this.Log("Controllers", "Executing: " + path);
       }
     }
     r = this;
     return Q.all(initializers.map(function(c) {
-      return r.Controllers[c].init();
+      return r.Controllers[c][call]();
     }));
   };
 
@@ -5436,6 +5437,7 @@ RDR = (function(_super) {
         return r.updateLocalVar(variable, snapshot.val(), true);
       });
       if (cached) {
+        this.removeDeferred();
         this.Debug("Listeners", "Read From Cache: " + path);
       } else {
         this.DS.child(path).on("child_changed", function(snapshot) {
@@ -5459,7 +5461,12 @@ RDR = (function(_super) {
     ds_path = this.slasherize(ds_path);
     r = this;
     return this.DS.child(ds_path).remove(function(error) {
-      return r.DSCallback("delete", ds_path, false, error);
+      r.DSCallback("delete", ds_path, false, error);
+      if (error) {
+        return r.Warn("DS", "Unable to Delete: " + ds_path);
+      } else {
+        return r.Log("DS", "Deleted: " + ds_path);
+      }
     });
   };
 
@@ -5480,9 +5487,9 @@ RDR = (function(_super) {
     }
   };
 
-  _Class.prototype["delete"] = function(data) {
+  _Class.prototype["delete"] = function(path) {
     var ds_path;
-    ds_path = this.varPathToDSPath(data._path);
+    ds_path = this.varPathToDSPath(path);
     if (ds_path) {
       return this.deletebyPath(ds_path);
     }
@@ -5802,6 +5809,8 @@ RDR = (function(_super) {
 
   _Class.prototype.currentPath = "/";
 
+  _Class.prototype.hashPath = "/";
+
   _Class.prototype.pathForSegments = function(pieces, reverse, index) {
     var segments;
     if (reverse == null) {
@@ -5827,13 +5836,15 @@ RDR = (function(_super) {
     new_path = "/" + (segments.join("/"));
     this.markActiveRoutes(routes);
     this.showLoading(routes);
-    if (path === this.currentPath) {
+    if (this.hashPath === path && new_path === this.currentPath) {
       return this.Log("Router", "Already Active: " + path);
     } else {
+      this.hashPath = path;
       this.currentPath = new_path;
       this.Log("Router", "Found: " + new_path);
-      return Q.allSettled(r.initControllers(segments)).then(function() {
+      return Q.allSettled(r.initControllers(segments, "before")).then(function() {
         r.generateViews(segments.slice(0).reverse());
+        r.initControllers(segments, "after");
         return r.isLoading = false;
       });
     }
@@ -5938,6 +5949,7 @@ RDR = (function(_super) {
         }
         var_key += key;
         if (typeof value === "object") {
+          value._key = key;
           value._path = this.slasherize(var_key);
           value._parent_key = this.slasherize(parent_key);
           this.prepareVars(var_key, value, synchronous);
@@ -5952,6 +5964,7 @@ RDR = (function(_super) {
       this.removeDeferred();
       return this.synchronousVars;
     } else {
+      this.updateView(parent_key, parent_value);
       return this.Vars;
     }
   };
@@ -5962,9 +5975,6 @@ RDR = (function(_super) {
     }
     this.prepareVars(path, value, synchronous);
     this.Log("Vars", "Set: " + path);
-    if (!synchronous) {
-      this.updateView(path, value);
-    }
     if (synchronous) {
       return this.DSDeferred.promise;
     }
@@ -5991,28 +6001,21 @@ RDR = (function(_super) {
   };
 
   _Class.prototype.getLocalVarByPath = function(path_str, clone) {
-    var Vars, o, p, path, _i, _len;
+    var o, p, path, vars, _i, _len;
     if (clone == null) {
       clone = true;
     }
     o = "";
     path_str = this.dotterize(path_str);
     path = path_str.split(".");
-    if (clone) {
-      Vars = $.extend({}, this.Vars);
-    } else {
-      Vars = this.Vars;
-    }
+    vars = clone ? $.extend({}, this.Vars) : this.Vars;
     for (_i = 0, _len = path.length; _i < _len; _i++) {
       p = path[_i];
-      if (p in Vars) {
-        Vars = Vars[p];
-      } else {
-        Vars = "";
-        break;
+      if (typeof vars === "object" && p in vars) {
+        vars = vars[p];
       }
     }
-    return Vars;
+    return vars;
   };
 
   _Class.prototype.setLocalVarByPath = function(obj, path_str, value) {
@@ -6050,7 +6053,7 @@ RDR = (function(_super) {
     var container, index, path, paths, segment, _i, _len;
     segments = segments.slice(0).reverse();
     paths = [];
-    paths.push("a[href='" + window.location.hash + "']");
+    paths.push("a[href='#" + this.hashPath + "']");
     for (index = _i = 0, _len = segments.length; _i < _len; index = ++_i) {
       segment = segments[index];
       path = this.pathForSegments(segments, false, index);
@@ -6058,8 +6061,7 @@ RDR = (function(_super) {
     }
     container = $(this.Config.container);
     container.find("a.active").removeClass("active");
-    container.find(paths.join(", ")).addClass("active");
-    return this.Warn(paths);
+    return container.find(paths.join(", ")).addClass("active");
   };
 
   _Class.prototype.generateViews = function(views, placer, html) {
@@ -6200,8 +6202,7 @@ RDR = (function(_super) {
       path = this.pathForSegments(segments, false, index);
       path = this.slasherize(path);
       loading_path = ("" + path + "/loading").replace(/\/\//g, "/");
-      this.Debug("Loading", "Fetching: " + path);
-      this.Debug("Loading", "Load Path: " + loading_path);
+      this.Log("Loading", "Fetching: " + loading_path);
       if (loading_path in this.Templates && $("[data-rdr-template-outlet='" + path + "']").length) {
         this.Log("Loading", "Found: " + loading_path);
         placer = $("[data-rdr-template-outlet='" + path + "']");
@@ -6212,7 +6213,7 @@ RDR = (function(_super) {
     if (!placer.length) {
       application_loading_path = "/loading";
       if (application_loading_path in this.Templates) {
-        this.Debug("Loading", "Use Application: " + application_loading_path);
+        this.Log("Loading", "Use Application: " + application_loading_path);
         if (!placer.length) {
           placer = $(this.Config.container).find("[data-rdr-template-outlet='/application']");
         }
@@ -6264,13 +6265,14 @@ RDR = (function(_super) {
     if (/\#|hash/.test(this.Config.history)) {
       this.Log("Booter", "RDR History is Now: #");
       this.Config.history = "#";
-      if (window.location.hash === "") {
-        window.location.hash = "#/";
-      }
       $(window).bind("hashchange", function() {
         return r.fetchPath(window.location.hash.replace(/\#/g, ""));
       });
-      return $(window).trigger("hashchange");
+      if (window.location.hash === "") {
+        return window.location.hash = "#/";
+      } else {
+        return $(window).trigger("hashchange");
+      }
     } else {
       $(this.Config.container).on("click", "a[href^='#']", function() {
         r.fetchPath($(this).attr("href").replace(/\#/g, ""));

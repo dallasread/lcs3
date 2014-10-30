@@ -1,5 +1,5 @@
 Lively.Controllers["/admin/settings/canned"] =
-	init: ->
+	before: ->
 		Lively.find "canned", { chatbox: Lively.Glob["chatbox"] }
 
 	actions:

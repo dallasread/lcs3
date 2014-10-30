@@ -1,5 +1,5 @@
 Lively.Controllers["/application"] =
-	init: ->
+	before: ->
 		$("body").removeClass "lcs-fixed"
 
 	actions:

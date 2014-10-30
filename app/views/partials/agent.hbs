@@ -1,6 +1,8 @@
 <tr>
 	<td class="align_center">
-		<i class="fa fa-check-circle fa-lrg online"></i>
+		{{#if online}}
+			<i class="fa fa-check-circle fa-lrg online"></i>
+		{{/if}}
 	</td>
 	<td>
 		<input type="text" {{bind-attr value="name" event="blur"}}>
