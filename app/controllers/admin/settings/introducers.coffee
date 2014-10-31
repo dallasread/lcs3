@@ -6,7 +6,7 @@ Lively.Controllers["/admin/settings/introducers"] =
 		create: ->
 			Lively.create "introducer",
 				name: ""
-				label: ""
+				permalink: ""
 				required: false
 				type: "text"
 				validator: ""
