@@ -60,10 +60,10 @@
 </div>
 
 <div class="visitor_profile_messages">
-	{{render "visitor.messages"}}
+	{{render "visitor.messages" "/partials/message"}}
 </div>
 
-<form class="visitor_new_message" {{action submit="createMessage"}}>
-	<textarea name="body"></textarea>
+<form class="visitor_new_message">
+	{{textarea value=body}}
 	<button type="submit">Send</button>
 </form>

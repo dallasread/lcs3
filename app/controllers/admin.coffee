@@ -1,7 +1,7 @@
 Lively.Controllers["/admin"] =
 	before: ->
 		$("body").addClass "lcs-fixed"
-		Lively.find "chatbox", { key: Lively.Glob["chatbox"] }, "settings"
+		Lively.find "chatbox", { id: Lively.Glob["chatbox"] }, "settings"
 		
 	actions:
 		closeAdmin: ->
