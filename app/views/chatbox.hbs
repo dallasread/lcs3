@@ -1,59 +1,10 @@
 <div class="chatbox">
-	<div class="topbar">
-		<h1>Lively Chat Support</h1>
-		<a href="#/" class="close icon">&times;</a>
-	</div>
-
-	<div class="header">	
-		<div class="profile">
-			<img src="assets/imgs/avatar.jpg">
-			<p class="served_by_description">
-				You're talking to
-				<span class="agent_name">Dallas</span>
-			</p>
-		</div>
-	</div>
-
-	<div class="messages">
-		<div class="overlay"></div>
-	</div>
-
-	<form class="introducer form">
-		<p class="please_introduce">
-			To start talking with <span class="agent_name">Dallas</span>,<br>please introduce yourself.
-		</p>
-
-		<button type="submit" class="fb_blue">
-			Introduce Myself through Facebook
-		</button>
-
-		<p class="or">or</p>
-
-		<div class="fields">
-			<div class="field">
-				<label for="field_{{ name }}">{{ label }}</label>
-				<input type="text" id="field_{{ name }}" name="{{ name }}" placeholder="First Name" {{#if validator}}data-validator="{{ validator }}"{{/if}} {{#if required}}required{{/if}}>
-			</div>
-		</div>
-
-		<button type="submit">
-			Introduce Myself
-		</button>
-	</form>
-
-	<form class="new_message">
-		<textarea placeholder="What's on your mind?"></textarea>
-		<div class="action_row">
-			<button type="submit">Send</button>
-			<p class="upload_icon"></p>
-			<div class="clear"></div>
-		</div>
-	</form>
+	{{{ outlet }}}
 	
 	<div class="prompter">
 		<div class="agent_avatar">
 			<p class="unread_messages_count">3</p>
-			<img src="assets/imgs/avatar.jpg">
+			<img src="{{ Vars.baseURL }}/imgs/avatar.jpg">
 		</div>
 		<p class="bubble">
 			I was wondering if you had any 3rd apples to display to the crew.

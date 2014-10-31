@@ -5319,8 +5319,6 @@ var RDR,
 this.RDR = (function() {
   function RDR() {}
 
-  RDR.prototype.Glob = {};
-
   RDR.prototype.Vars = {};
 
   RDR.prototype.Controllers = {};
@@ -5338,6 +5336,8 @@ this.RDR = (function() {
   RDR.prototype.DS = null;
 
   RDR.prototype.PathIsDynamic = false;
+
+  RDR.prototype.fn = {};
 
   return RDR;
 
@@ -5403,16 +5403,27 @@ RDR = (function(_super) {
   };
 
   _Class.prototype.DSConnect = function() {
+    var r;
+    r = this;
     this.DSURL = "https://" + this.Config.firebase + ".firebaseio.com/";
-    return this.DS = new Firebase(this.DSURL);
+    this.DS = new Firebase(this.DSURL);
+    return this.DS.onAuth(function(authData) {
+      if (authData) {
+        return r.Vars.currentUserKey = authData.uid;
+      } else {
+        return delete r.Vars.currentUserKey;
+      }
+    });
   };
 
   _Class.prototype.snapshotWithKey = function(snapshot, model) {
     var data;
     data = snapshot.val();
     data || (data = {});
-    data._key = snapshot.name();
-    data._model = model;
+    if (!$.isEmptyObject(data)) {
+      data._key = snapshot.name();
+      data._model = model;
+    }
     return data;
   };
 
@@ -5505,8 +5516,11 @@ RDR = (function(_super) {
     }
   };
 
-  _Class.prototype.create = function(key, value) {
+  _Class.prototype.create = function(key, value, callback) {
     var k, m, path, path_args, r, v;
+    if (callback == null) {
+      callback = false;
+    }
     path = this.varPathToDSPath(key);
     if (!path && key in this.Models) {
       m = this.Models[this.singularize(key)];
@@ -5527,16 +5541,33 @@ RDR = (function(_super) {
     }
     if (path) {
       r = this;
-      return this.lastCreate = this.DS.child(path).push(value, function(error) {
-        return r.DSCallback("create", key, value, error);
-      });
+      if ("key" in value) {
+        path = "" + path + "/" + value.key;
+        delete value.key;
+        return this.DS.child(path).set(value, function(error) {
+          r.DSCallback("create", key, value, error);
+          if (typeof callback === "function") {
+            return callback();
+          }
+        });
+      } else {
+        return r.lastInsert = this.DS.child(path).push(value, function(error) {
+          r.DSCallback("create", key, value, error);
+          if (typeof callback === "function") {
+            return callback();
+          }
+        });
+      }
     } else {
       return this.Warn("Vars", "Bad Path: " + key);
     }
   };
 
-  _Class.prototype.update = function(key, value) {
+  _Class.prototype.update = function(key, value, callback) {
     var path, r;
+    if (callback == null) {
+      callback = false;
+    }
     path = this.varPathToDSPath(key);
     if (!path) {
       path = key;
@@ -5544,7 +5575,10 @@ RDR = (function(_super) {
     if (path) {
       r = this;
       return this.DS.child(path).set(value, function(error) {
-        return r.DSCallback("update", key, value, error);
+        r.DSCallback("update", key, value, error);
+        if (typeof callback === "function") {
+          return callback();
+        }
       });
     } else {
       return this.Warn("Vars", "Bad Path: " + key);
@@ -5555,6 +5589,7 @@ RDR = (function(_super) {
     var r;
     if (error) {
       r = this;
+      console.log("" + callback);
       this.DS.child(path).once("value", function(snapshot) {
         return r.updateView(path, value);
       });
@@ -5867,8 +5902,10 @@ RDR = (function(_super) {
     routes = segments.slice(0).reverse();
     new_path = "/" + (segments.join("/"));
     this.markActiveRoutes(routes);
-    this.showLoading(routes);
-    if (this.hashPath === path && new_path === this.currentPath) {
+    if (path.indexOf("loading") === -1) {
+      this.showLoading(routes);
+    }
+    if (1 === 2) {
       return this.Log("Router", "Already Active: " + path);
     } else {
       this.hashPath = path;
@@ -5877,7 +5914,7 @@ RDR = (function(_super) {
       return Q.allSettled(r.initControllers(segments, "before")).then(function() {
         r.generateViews(segments.slice(0).reverse());
         r.initControllers(segments, "after");
-        return r.isLoading = false;
+        return r.hideLoading();
       });
     }
   };
@@ -5944,6 +5981,57 @@ RDR = (function(_super) {
     return _Class.__super__.constructor.apply(this, arguments);
   }
 
+  _Class.prototype.createUserAndSignIn = function(user, callback) {
+    var r;
+    if (callback == null) {
+      callback = false;
+    }
+    r = this;
+    return this.DS.createUser(user, function(error) {
+      if (typeof callback === "function") {
+        return r.signInUser(user, callback);
+      } else {
+        return r.signInUser(user);
+      }
+    });
+  };
+
+  _Class.prototype.signInUser = function(user, callback) {
+    var r;
+    if (callback == null) {
+      callback = false;
+    }
+    r = this;
+    return this.DS.authWithPassword(user, function(error, authData) {
+      if (typeof callback === "function") {
+        return callback(error, authData);
+      } else if (error) {
+        return alert("Email or Password was invalid.");
+      }
+    });
+  };
+
+  _Class.prototype.signOut = function(callback) {
+    if (callback == null) {
+      callback = false;
+    }
+    this.DS.unauth();
+    if (typeof callback === "function") {
+      return callback();
+    }
+  };
+
+  return _Class;
+
+})(RDR);
+
+RDR = (function(_super) {
+  __extends(_Class, _super);
+
+  function _Class() {
+    return _Class.__super__.constructor.apply(this, arguments);
+  }
+
   _Class.prototype.varChart = {};
 
   _Class.prototype.synchronousVars = {};
@@ -5972,10 +6060,12 @@ RDR = (function(_super) {
       }
       var_key += key;
       if (typeof value === "object") {
-        value._key = key;
-        value._path = this.slasherize(var_key);
-        value._parent_key = this.slasherize(parent_key);
         model = this.singularize(this.dotterize(parent_key));
+        if (Object.keys(value).length) {
+          value._key = key;
+          value._path = this.slasherize(var_key);
+          value._parent_key = this.slasherize(parent_key);
+        }
         this.prepareVars(var_key, value, synchronous);
       } else {
         if (synchronous) {
@@ -6254,6 +6344,11 @@ RDR = (function(_super) {
         return $(this).attr(attr, v);
       }
     });
+  };
+
+  _Class.prototype.hideLoading = function() {
+    $(".rdr-template[data-rdr-template='/loading']").remove();
+    return this.isLoading = false;
   };
 
   _Class.prototype.showLoading = function(segments, placer, html) {

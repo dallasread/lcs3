@@ -5320,8 +5320,6 @@ var RDR,
 this.RDR = (function() {
   function RDR() {}
 
-  RDR.prototype.Glob = {};
-
   RDR.prototype.Vars = {};
 
   RDR.prototype.Controllers = {};
@@ -5339,6 +5337,8 @@ this.RDR = (function() {
   RDR.prototype.DS = null;
 
   RDR.prototype.PathIsDynamic = false;
+
+  RDR.prototype.fn = {};
 
   return RDR;
 
@@ -5404,16 +5404,27 @@ RDR = (function(_super) {
   };
 
   _Class.prototype.DSConnect = function() {
+    var r;
+    r = this;
     this.DSURL = "https://" + this.Config.firebase + ".firebaseio.com/";
-    return this.DS = new Firebase(this.DSURL);
+    this.DS = new Firebase(this.DSURL);
+    return this.DS.onAuth(function(authData) {
+      if (authData) {
+        return r.Vars.currentUserKey = authData.uid;
+      } else {
+        return delete r.Vars.currentUserKey;
+      }
+    });
   };
 
   _Class.prototype.snapshotWithKey = function(snapshot, model) {
     var data;
     data = snapshot.val();
     data || (data = {});
-    data._key = snapshot.name();
-    data._model = model;
+    if (!$.isEmptyObject(data)) {
+      data._key = snapshot.name();
+      data._model = model;
+    }
     return data;
   };
 
@@ -5506,8 +5517,11 @@ RDR = (function(_super) {
     }
   };
 
-  _Class.prototype.create = function(key, value) {
+  _Class.prototype.create = function(key, value, callback) {
     var k, m, path, path_args, r, v;
+    if (callback == null) {
+      callback = false;
+    }
     path = this.varPathToDSPath(key);
     if (!path && key in this.Models) {
       m = this.Models[this.singularize(key)];
@@ -5528,16 +5542,33 @@ RDR = (function(_super) {
     }
     if (path) {
       r = this;
-      return this.lastCreate = this.DS.child(path).push(value, function(error) {
-        return r.DSCallback("create", key, value, error);
-      });
+      if ("key" in value) {
+        path = "" + path + "/" + value.key;
+        delete value.key;
+        return this.DS.child(path).set(value, function(error) {
+          r.DSCallback("create", key, value, error);
+          if (typeof callback === "function") {
+            return callback();
+          }
+        });
+      } else {
+        return r.lastInsert = this.DS.child(path).push(value, function(error) {
+          r.DSCallback("create", key, value, error);
+          if (typeof callback === "function") {
+            return callback();
+          }
+        });
+      }
     } else {
       return this.Warn("Vars", "Bad Path: " + key);
     }
   };
 
-  _Class.prototype.update = function(key, value) {
+  _Class.prototype.update = function(key, value, callback) {
     var path, r;
+    if (callback == null) {
+      callback = false;
+    }
     path = this.varPathToDSPath(key);
     if (!path) {
       path = key;
@@ -5545,7 +5576,10 @@ RDR = (function(_super) {
     if (path) {
       r = this;
       return this.DS.child(path).set(value, function(error) {
-        return r.DSCallback("update", key, value, error);
+        r.DSCallback("update", key, value, error);
+        if (typeof callback === "function") {
+          return callback();
+        }
       });
     } else {
       return this.Warn("Vars", "Bad Path: " + key);
@@ -5556,6 +5590,7 @@ RDR = (function(_super) {
     var r;
     if (error) {
       r = this;
+      console.log("" + callback);
       this.DS.child(path).once("value", function(snapshot) {
         return r.updateView(path, value);
       });
@@ -5868,8 +5903,10 @@ RDR = (function(_super) {
     routes = segments.slice(0).reverse();
     new_path = "/" + (segments.join("/"));
     this.markActiveRoutes(routes);
-    this.showLoading(routes);
-    if (this.hashPath === path && new_path === this.currentPath) {
+    if (path.indexOf("loading") === -1) {
+      this.showLoading(routes);
+    }
+    if (1 === 2) {
       return this.Log("Router", "Already Active: " + path);
     } else {
       this.hashPath = path;
@@ -5878,7 +5915,7 @@ RDR = (function(_super) {
       return Q.allSettled(r.initControllers(segments, "before")).then(function() {
         r.generateViews(segments.slice(0).reverse());
         r.initControllers(segments, "after");
-        return r.isLoading = false;
+        return r.hideLoading();
       });
     }
   };
@@ -5945,6 +5982,57 @@ RDR = (function(_super) {
     return _Class.__super__.constructor.apply(this, arguments);
   }
 
+  _Class.prototype.createUserAndSignIn = function(user, callback) {
+    var r;
+    if (callback == null) {
+      callback = false;
+    }
+    r = this;
+    return this.DS.createUser(user, function(error) {
+      if (typeof callback === "function") {
+        return r.signInUser(user, callback);
+      } else {
+        return r.signInUser(user);
+      }
+    });
+  };
+
+  _Class.prototype.signInUser = function(user, callback) {
+    var r;
+    if (callback == null) {
+      callback = false;
+    }
+    r = this;
+    return this.DS.authWithPassword(user, function(error, authData) {
+      if (typeof callback === "function") {
+        return callback(error, authData);
+      } else if (error) {
+        return alert("Email or Password was invalid.");
+      }
+    });
+  };
+
+  _Class.prototype.signOut = function(callback) {
+    if (callback == null) {
+      callback = false;
+    }
+    this.DS.unauth();
+    if (typeof callback === "function") {
+      return callback();
+    }
+  };
+
+  return _Class;
+
+})(RDR);
+
+RDR = (function(_super) {
+  __extends(_Class, _super);
+
+  function _Class() {
+    return _Class.__super__.constructor.apply(this, arguments);
+  }
+
   _Class.prototype.varChart = {};
 
   _Class.prototype.synchronousVars = {};
@@ -5973,10 +6061,12 @@ RDR = (function(_super) {
       }
       var_key += key;
       if (typeof value === "object") {
-        value._key = key;
-        value._path = this.slasherize(var_key);
-        value._parent_key = this.slasherize(parent_key);
         model = this.singularize(this.dotterize(parent_key));
+        if (Object.keys(value).length) {
+          value._key = key;
+          value._path = this.slasherize(var_key);
+          value._parent_key = this.slasherize(parent_key);
+        }
         this.prepareVars(var_key, value, synchronous);
       } else {
         if (synchronous) {
@@ -6255,6 +6345,11 @@ RDR = (function(_super) {
         return $(this).attr(attr, v);
       }
     });
+  };
+
+  _Class.prototype.hideLoading = function() {
+    $(".rdr-template[data-rdr-template='/loading']").remove();
+    return this.isLoading = false;
   };
 
   _Class.prototype.showLoading = function(segments, placer, html) {
@@ -8914,11 +9009,15 @@ this["RDR"]["prototype"]["Templates"]["/admin"] = Handlebars.template({"compiler
   var stack1, helper, lambda=this.lambda, helperMissing=helpers.helperMissing, escapeExpression=this.escapeExpression, functionType="function", buffer = "<div class=\"admin\">\n<div class=\"topbar\">\n<div class=\"menu_wrapper\">\n<!--<p class=\"fa fa-bars open_menu icon\"></p>-->\n</div>\n<h1>";
   stack1 = lambda(((stack1 = (depth0 != null ? depth0.settings : depth0)) != null ? stack1.name : stack1), depth0);
   if (stack1 != null) { buffer += stack1; }
-  buffer += "</h1>\n<a href=\"#/\" class=\"close icon\">&times;</a>\n</div>\n\n<div class=\"leftbar\">\n<a class=\"toggle_status offline\" "
+  buffer += "</h1>\n<a class=\"signin icon\" "
+    + escapeExpression(((helpers.action || (depth0 && depth0.action) || helperMissing).call(depth0, {"name":"action","hash":{
+    'click': ("signOut")
+  },"data":data})))
+    + "><i class=\"fa fa-lock\"></i></a>\n<a href=\"#/\" class=\"close icon\">&times;</a>\n</div>\n\n<div class=\"leftbar\">\n<a class=\"toggle_status offline\" "
     + escapeExpression(((helpers.action || (depth0 && depth0.action) || helperMissing).call(depth0, {"name":"action","hash":{
     'click': ("toggleStatus")
   },"data":data})))
-    + ">\n<span class=\"toggle-on\">\n<i class=\"fa fa-toggle-on\"></i>\nOnline\n</span>\n<span class=\"toggle-off\">\n<i class=\"fa fa-toggle-on\"></i>\nOffline\n</span>\n</a>\n\n<a href=\"#/admin/visitors\">\n<i class=\"fa fa-comments icon\"></i>\nConvos\n</a>\n\n<a href=\"#/admin/agents\">\n<i class=\"fa fa-group icon\"></i>\nAgents\n</a>\n\n<a href=\"#/admin/settings\">\n<i class=\"fa fa-cog icon\"></i>\nSettings\n</a>\n\n<a href=\"#/admin/upgrade\">\n<!-- hide_if_upgraded hide_unless_admin -->\n<i class=\"fa fa-bolt icon\"></i>\nUpgrade\n</a>\n</div>\n\n<div class=\"panes\">\n";
+    + ">\n<span class=\"toggle-on\">\n<i class=\"fa fa-toggle-on\"></i>\nOnline\n</span>\n<span class=\"toggle-off\">\n<i class=\"fa fa-toggle-on\"></i>\nOffline\n</span>\n</a>\n\n<a href=\"#/admin/visitors\">\n<i class=\"fa fa-group icon\"></i>\nVisitors\n</a>\n\n<a href=\"#/admin/agents\">\n<i class=\"fa fa-support icon\"></i>\nAgents\n</a>\n\n<a href=\"#/admin/settings\">\n<i class=\"fa fa-cog icon\"></i>\nSettings\n</a>\n\n<a href=\"#/admin/upgrade\">\n<!-- hide_if_upgraded hide_unless_admin -->\n<i class=\"fa fa-bolt icon\"></i>\nUpgrade\n</a>\n</div>\n\n<div class=\"panes\">\n";
   stack1 = ((helper = (helper = helpers.outlet || (depth0 != null ? depth0.outlet : depth0)) != null ? helper : helperMissing),(typeof helper === functionType ? helper.call(depth0, {"name":"outlet","hash":{},"data":data}) : helper));
   if (stack1 != null) { buffer += stack1; }
   return buffer + "\n</div>\n\n</div>\n";
@@ -8940,7 +9039,7 @@ this["RDR"]["prototype"]["Templates"]["/admin/agents"] = Handlebars.template({"c
 
 
 this["RDR"]["prototype"]["Templates"]["/admin/index"] = Handlebars.template({"compiler":[6,">= 2.0.0-beta.1"],"main":function(depth0,helpers,partials,data) {
-  return "<div class=\"pane\">\nThis is main admin tab.\n</div>\n";
+  return "<div class=\"pane\">\nThis is a Welcome page.\n</div>\n";
   },"useData":true});
 
 
@@ -9016,8 +9115,13 @@ this["RDR"]["prototype"]["Templates"]["/admin/settings/loading"] = Handlebars.te
 
 
 this["RDR"]["prototype"]["Templates"]["/admin/settings/me"] = Handlebars.template({"compiler":[6,">= 2.0.0-beta.1"],"main":function(depth0,helpers,partials,data) {
-  return "<div>\n<form>\n<div class=\"field\">\n<label>What is your <strong>email address</strong>?</label>\n<input type=\"text\">\n</div>\n\n<div class=\"field\">\n<label>What is your <strong>time zone</strong>?</label>\n<input type=\"text\">\n</div>\n\n<button type=\"submit\" class=\"full_width\">Save My Profile</button>\n</form>\n</div>\n";
-  },"useData":true});
+  var helperMissing=helpers.helperMissing, escapeExpression=this.escapeExpression;
+  return "<div>\n<form>\n<div class=\"field\">\n<label>What is your <strong>email address</strong>?</label>\n<input type=\"text\">\n</div>\n\n<div class=\"field\">\n<label>What is your <strong>time zone</strong>?</label>\n<input type=\"text\">\n</div>\n\n<button type=\"submit\" class=\"full_width\">Save My Profile</button>\n</form>\n\n<br><button "
+    + escapeExpression(((helpers.action || (depth0 && depth0.action) || helperMissing).call(depth0, {"name":"action","hash":{
+    'click': ("signOut")
+  },"data":data})))
+    + " class=\"gray\">Sign Out</button>\n</div>\n";
+},"useData":true});
 
 
 
@@ -9113,15 +9217,39 @@ this["RDR"]["prototype"]["Templates"]["/application"] = Handlebars.template({"co
 
 
 
-this["RDR"]["prototype"]["Templates"]["/chatbox"] = Handlebars.template({"1":function(depth0,helpers,partials,data) {
+this["RDR"]["prototype"]["Templates"]["/chatbox"] = Handlebars.template({"compiler":[6,">= 2.0.0-beta.1"],"main":function(depth0,helpers,partials,data) {
+  var stack1, helper, functionType="function", helperMissing=helpers.helperMissing, lambda=this.lambda, escapeExpression=this.escapeExpression, buffer = "<div class=\"chatbox\">\n";
+  stack1 = ((helper = (helper = helpers.outlet || (depth0 != null ? depth0.outlet : depth0)) != null ? helper : helperMissing),(typeof helper === functionType ? helper.call(depth0, {"name":"outlet","hash":{},"data":data}) : helper));
+  if (stack1 != null) { buffer += stack1; }
+  return buffer + "\n\n<div class=\"prompter\">\n<div class=\"agent_avatar\">\n<p class=\"unread_messages_count\">3</p>\n<img src=\""
+    + escapeExpression(lambda(((stack1 = (depth0 != null ? depth0.Vars : depth0)) != null ? stack1.baseURL : stack1), depth0))
+    + "/imgs/avatar.jpg\">\n</div>\n<p class=\"bubble\">\nI was wondering if you had any 3rd apples to display to the crew.\n</p>\n</div>\n</div>\n";
+},"useData":true});
+
+
+
+this["RDR"]["prototype"]["Templates"]["/chatbox/index"] = Handlebars.template({"1":function(depth0,helpers,partials,data) {
+  var helperMissing=helpers.helperMissing, escapeExpression=this.escapeExpression;
+  return escapeExpression(((helpers.action || (depth0 && depth0.action) || helperMissing).call(depth0, {"name":"action","hash":{
+    'click': ("signOut")
+  },"data":data})));
+  },"3":function(depth0,helpers,partials,data) {
   var helper, functionType="function", helperMissing=helpers.helperMissing, escapeExpression=this.escapeExpression;
   return "data-validator=\""
     + escapeExpression(((helper = (helper = helpers.validator || (depth0 != null ? depth0.validator : depth0)) != null ? helper : helperMissing),(typeof helper === functionType ? helper.call(depth0, {"name":"validator","hash":{},"data":data}) : helper)))
     + "\"";
-},"3":function(depth0,helpers,partials,data) {
+},"5":function(depth0,helpers,partials,data) {
   return "required";
   },"compiler":[6,">= 2.0.0-beta.1"],"main":function(depth0,helpers,partials,data) {
-  var stack1, helper, functionType="function", helperMissing=helpers.helperMissing, escapeExpression=this.escapeExpression, buffer = "<div class=\"chatbox\">\n<div class=\"topbar\">\n<h1>Lively Chat Support</h1>\n<a href=\"#/\" class=\"close icon\">&times;</a>\n</div>\n\n<div class=\"header\">\n<div class=\"profile\">\n<img src=\"assets/imgs/avatar.jpg\">\n<p class=\"served_by_description\">\nYou're talking to\n<span class=\"agent_name\">Dallas</span>\n</p>\n</div>\n</div>\n\n<div class=\"messages\">\n<div class=\"overlay\"></div>\n</div>\n\n<form class=\"introducer form\">\n<p class=\"please_introduce\">\nTo start talking with <span class=\"agent_name\">Dallas</span>,<br>please introduce yourself.\n</p>\n\n<button type=\"submit\" class=\"fb_blue\">\nIntroduce Myself through Facebook\n</button>\n\n<p class=\"or\">or</p>\n\n<div class=\"fields\">\n<div class=\"field\">\n<label for=\"field_"
+  var stack1, helper, lambda=this.lambda, escapeExpression=this.escapeExpression, functionType="function", helperMissing=helpers.helperMissing, buffer = "<div>\n<div class=\"topbar\">\n<h1>";
+  stack1 = lambda(((stack1 = (depth0 != null ? depth0.settings : depth0)) != null ? stack1.name : stack1), depth0);
+  if (stack1 != null) { buffer += stack1; }
+  buffer += "</h1>\n\n<a href=\"#/chatbox/signin\" class=\"signin icon\" ";
+  stack1 = helpers['if'].call(depth0, ((stack1 = (depth0 != null ? depth0.Vars : depth0)) != null ? stack1.currentUserKey : stack1), {"name":"if","hash":{},"fn":this.program(1, data),"inverse":this.noop,"data":data});
+  if (stack1 != null) { buffer += stack1; }
+  buffer += "><i class=\"fa fa-lock\"></i></a>\n<a href=\"#/\" class=\"close icon\">&times;</a>\n</div>\n\n<div class=\"header\">\n<div class=\"profile\">\n<img src=\""
+    + escapeExpression(lambda(((stack1 = (depth0 != null ? depth0.Vars : depth0)) != null ? stack1.baseURL : stack1), depth0))
+    + "/imgs/avatar.jpg\">\n<p class=\"served_by_description\">\nYou're talking to\n<span class=\"agent_name\">Dallas</span>\n</p>\n</div>\n</div>\n\n<div class=\"messages\">\n<div class=\"overlay\"></div>\n</div>\n\n<form class=\"introducer form\">\n<p class=\"please_introduce\">\nTo start talking with <span class=\"agent_name\">Dallas</span>,<br>please introduce yourself.\n</p>\n\n<button type=\"submit\" class=\"fb_blue\">\nIntroduce Myself through Facebook\n</button>\n\n<p class=\"or\">or</p>\n\n<div class=\"fields\">\n<div class=\"field\">\n<label for=\"field_"
     + escapeExpression(((helper = (helper = helpers.name || (depth0 != null ? depth0.name : depth0)) != null ? helper : helperMissing),(typeof helper === functionType ? helper.call(depth0, {"name":"name","hash":{},"data":data}) : helper)))
     + "\">"
     + escapeExpression(((helper = (helper = helpers.label || (depth0 != null ? depth0.label : depth0)) != null ? helper : helperMissing),(typeof helper === functionType ? helper.call(depth0, {"name":"label","hash":{},"data":data}) : helper)))
@@ -9130,17 +9258,72 @@ this["RDR"]["prototype"]["Templates"]["/chatbox"] = Handlebars.template({"1":fun
     + "\" name=\""
     + escapeExpression(((helper = (helper = helpers.name || (depth0 != null ? depth0.name : depth0)) != null ? helper : helperMissing),(typeof helper === functionType ? helper.call(depth0, {"name":"name","hash":{},"data":data}) : helper)))
     + "\" placeholder=\"First Name\" ";
-  stack1 = helpers['if'].call(depth0, (depth0 != null ? depth0.validator : depth0), {"name":"if","hash":{},"fn":this.program(1, data),"inverse":this.noop,"data":data});
+  stack1 = helpers['if'].call(depth0, (depth0 != null ? depth0.validator : depth0), {"name":"if","hash":{},"fn":this.program(3, data),"inverse":this.noop,"data":data});
   if (stack1 != null) { buffer += stack1; }
   buffer += " ";
-  stack1 = helpers['if'].call(depth0, (depth0 != null ? depth0.required : depth0), {"name":"if","hash":{},"fn":this.program(3, data),"inverse":this.noop,"data":data});
+  stack1 = helpers['if'].call(depth0, (depth0 != null ? depth0.required : depth0), {"name":"if","hash":{},"fn":this.program(5, data),"inverse":this.noop,"data":data});
   if (stack1 != null) { buffer += stack1; }
-  return buffer + ">\n</div>\n</div>\n\n<button type=\"submit\">\nIntroduce Myself\n</button>\n</form>\n\n<form class=\"new_message\">\n<textarea placeholder=\"What's on your mind?\"></textarea>\n<div class=\"action_row\">\n<button type=\"submit\">Send</button>\n<p class=\"upload_icon\"></p>\n<div class=\"clear\"></div>\n</div>\n</form>\n\n<div class=\"prompter\">\n<div class=\"agent_avatar\">\n<p class=\"unread_messages_count\">3</p>\n<img src=\"assets/imgs/avatar.jpg\">\n</div>\n<p class=\"bubble\">\nI was wondering if you had any 3rd apples to display to the crew.\n</p>\n</div>\n</div>\n";
+  return buffer + ">\n</div>\n</div>\n\n<button type=\"submit\">\nIntroduce Myself\n</button>\n</form>\n\n<form class=\"new_message\">\n<textarea placeholder=\"What's on your mind?\"></textarea>\n<div class=\"action_row\">\n<button type=\"submit\">Send</button>\n<p class=\"upload_icon\"></p>\n<div class=\"clear\"></div>\n</div>\n</form>\n</div>\n";
 },"useData":true});
 
 
 
-this["RDR"]["prototype"]["Templates"]["/loading"] = Handlebars.template({"compiler":[6,">= 2.0.0-beta.1"],"main":function(depth0,helpers,partials,data) {
+this["RDR"]["prototype"]["Templates"]["/chatbox/signin"] = Handlebars.template({"1":function(depth0,helpers,partials,data) {
+  var helperMissing=helpers.helperMissing, escapeExpression=this.escapeExpression;
+  return escapeExpression(((helpers.action || (depth0 && depth0.action) || helperMissing).call(depth0, {"name":"action","hash":{
+    'click': ("signOut")
+  },"data":data})));
+  },"compiler":[6,">= 2.0.0-beta.1"],"main":function(depth0,helpers,partials,data) {
+  var stack1, lambda=this.lambda, helperMissing=helpers.helperMissing, escapeExpression=this.escapeExpression, buffer = "<div>\n<div class=\"topbar\">\n<h1>";
+  stack1 = lambda(((stack1 = (depth0 != null ? depth0.settings : depth0)) != null ? stack1.name : stack1), depth0);
+  if (stack1 != null) { buffer += stack1; }
+  buffer += "</h1>\n\n<a href=\"#/chatbox\" class=\"signin icon\" ";
+  stack1 = helpers['if'].call(depth0, ((stack1 = (depth0 != null ? depth0.Vars : depth0)) != null ? stack1.currentUserKey : stack1), {"name":"if","hash":{},"fn":this.program(1, data),"inverse":this.noop,"data":data});
+  if (stack1 != null) { buffer += stack1; }
+  return buffer + "><i class=\"fa fa-lock\"></i></a>\n<a href=\"#/\" class=\"close icon\">&times;</a>\n</div>\n\n<form class=\"introducer form\" "
+    + escapeExpression(((helpers.action || (depth0 && depth0.action) || helperMissing).call(depth0, {"name":"action","hash":{
+    'submit': ("signIn")
+  },"data":data})))
+    + ">\n<p class=\"please_introduce\">\nTo sign in as an agent, please enter your credentials below.\n</p>\n\n<div class=\"fields\">\n<div class=\"field\">\n<label for=\"field_email\" class=\"moving_label\">Your Email Address</label>\n<input type=\"email\" id=\"field_email\" name=\"email\" placeholder=\"Email Address\" required>\n</div>\n<div class=\"field\">\n<label for=\"field_password\" class=\"moving_label\">Your Password</label>\n<input type=\"password\" id=\"field_password\" name=\"password\" placeholder=\"Password\" required>\n</div>\n</div>\n\n<button type=\"submit\">Sign In</button>\n</form>\n</div>\n";
+},"useData":true});
+
+
+
+this["RDR"]["prototype"]["Templates"]["/install"] = Handlebars.template({"compiler":[6,">= 2.0.0-beta.1"],"main":function(depth0,helpers,partials,data) {
+  var stack1, helper, functionType="function", helperMissing=helpers.helperMissing, buffer = "<div class=\"install_overlay\">\n<div class=\"install\">\n";
+  stack1 = ((helper = (helper = helpers.outlet || (depth0 != null ? depth0.outlet : depth0)) != null ? helper : helperMissing),(typeof helper === functionType ? helper.call(depth0, {"name":"outlet","hash":{},"data":data}) : helper));
+  if (stack1 != null) { buffer += stack1; }
+  return buffer + "\n</div>\n</div>\n";
+},"useData":true});
+
+
+
+this["RDR"]["prototype"]["Templates"]["/install/index"] = Handlebars.template({"compiler":[6,">= 2.0.0-beta.1"],"main":function(depth0,helpers,partials,data) {
+  var stack1, helperMissing=helpers.helperMissing, escapeExpression=this.escapeExpression, lambda=this.lambda;
+  return "<form class=\"form\" "
+    + escapeExpression(((helpers.action || (depth0 && depth0.action) || helperMissing).call(depth0, {"name":"action","hash":{
+    'submit': ("createChatbox")
+  },"data":data})))
+    + ">\n<div class=\"is_loading with_padding\">\n<img src=\""
+    + escapeExpression(lambda(((stack1 = (depth0 != null ? depth0.Vars : depth0)) != null ? stack1.baseURL : stack1), depth0))
+    + "/imgs/badge_almost.png\" class=\"badge\">\n<img src=\""
+    + escapeExpression(lambda(((stack1 = (depth0 != null ? depth0.Vars : depth0)) != null ? stack1.baseURL : stack1), depth0))
+    + "/imgs/loading.gif\">\n</div>\n\n<div class=\"isnt_loading\">\n<img src=\""
+    + escapeExpression(lambda(((stack1 = (depth0 != null ? depth0.Vars : depth0)) != null ? stack1.baseURL : stack1), depth0))
+    + "/imgs/badge_almost.png\" class=\"badge\">\n\n<p>\n<strong>Congratulations</strong> &mdash; Lively Chat Support is almost set up. Simply fill in the form below to register your chatbox.\n</p>\n\n<div class=\"fields\">\n<div class=\"field\">\n<label for=\"install_field_email\">What is your <strong>email address</strong>?</label>\n<input type=\"email\" id=\"install_field_email\" name=\"email\" placeholder=\"Email Address\" data-validator=\"EMAIL\" required>\n</div>\n<div class=\"field\">\n<label for=\"install_field_password\">Please choose a <strong>password</strong>.</label>\n<input type=\"password\" id=\"install_field_password\" name=\"password\" placeholder=\"Password\" data-validator=\"HASLENGTH\" required>\n</div>\n<div class=\"field\">\n<label for=\"install_field_token\" class=\"force_show\">Serial Number</label>\n<input type=\"text\" id=\"install_field_token\" value=\""
+    + escapeExpression(lambda(((stack1 = (depth0 != null ? depth0.Vars : depth0)) != null ? stack1.chatbox_key : stack1), depth0))
+    + "\" name=\"key\" readonly=\"readonly\">\n</div>\n</div>\n\n<button type=\"submit\">\nStart Using My Chatbox &nbsp; &rarr;\n</button>\n</div>\n</form>\n";
+},"useData":true});
+
+
+
+this["RDR"]["prototype"]["Templates"]["/install/success"] = Handlebars.template({"compiler":[6,">= 2.0.0-beta.1"],"main":function(depth0,helpers,partials,data) {
+  return "<div class=\"success\">\n<div class=\"fields\">\n<p>\n<strong>Thanks for registering!</strong>\n</p>\n<p>\nYou're on the right track to connect with your customers in a new way!\n</p>\n</div>\n\n<p class=\"show_admin button\">\nStart Using My Chatbox &nbsp; &rarr;\n</p>\n</div>\n";
+  },"useData":true});
+
+
+
+this["RDR"]["prototype"]["Templates"]["/not_loading"] = Handlebars.template({"compiler":[6,">= 2.0.0-beta.1"],"main":function(depth0,helpers,partials,data) {
   return "<div class=\"application_loading loading\"></div>\n";
   },"useData":true});
 
@@ -9316,7 +9499,11 @@ Lively.Config = {
 };
 
 Lively.Routes = {
-  "/chatbox": true,
+  "/chatbox": {
+    "/signin": true,
+    "/prompter": true
+  },
+  "/install": true,
   "/admin": {
     "/visitors": {
       "/:visitor_id": "visitor"
@@ -9334,7 +9521,11 @@ Lively.Routes = {
 };
 
 Lively.Initializers.push(function() {
-  return Lively.Glob["chatbox"] = $("script[data-lively]").data("lively");
+  return Lively.Vars.baseURL = "http://localhost:8888/lively/public";
+});
+
+Lively.Initializers.push(function() {
+  return Lively.Vars.chatbox_key = $("script[data-lively]").data("lively");
 });
 
 Lively.Initializers.push(function() {
@@ -9346,17 +9537,22 @@ Lively.Initializers.push(function() {
 Lively.Controllers["/admin"] = {
   before: function() {
     $("body").addClass("lcs-fixed");
-    return Lively.find("chatbox", {
-      key: Lively.Glob["chatbox"]
-    }, "settings");
+    return Lively.find("agent", {
+      chatbox: Lively.Vars.chatbox_key
+    });
+  },
+  after: function() {
+    if (Lively.Vars["agents"][Lively.Vars.currentUserKey]["online"]) {
+      return $(".toggle_status").removeClass("offline").addClass("online");
+    }
   },
   actions: {
     closeAdmin: function() {
       return Lively.fetchPath("/");
     },
     toggleStatus: function() {
-      $(".toggle_status").toggleClass("offline");
-      return $(".toggle_status").toggleClass("online");
+      $(".toggle_status").toggleClass("offline").toggleClass("online");
+      return Lively.update("/agents/" + Lively.Vars.currentUserKey + "/online", $(".toggle_status").hasClass("online"));
     },
     "delete": function(element, data) {
       if (confirm("Are you sure you want to delete this?")) {
@@ -9369,7 +9565,7 @@ Lively.Controllers["/admin"] = {
 Lively.Controllers["/admin/agents"] = {
   before: function() {
     return Lively.find("agent", {
-      chatbox: Lively.Glob["chatbox"]
+      chatbox: Lively.Vars.chatbox_key
     });
   },
   actions: {
@@ -9387,7 +9583,7 @@ Lively.Controllers["/admin/agents"] = {
 Lively.Controllers["/admin/settings/canned"] = {
   before: function() {
     return Lively.find("canned", {
-      chatbox: Lively.Glob["chatbox"]
+      chatbox: Lively.Vars.chatbox_key
     });
   },
   actions: {
@@ -9405,7 +9601,7 @@ Lively.Controllers["/admin/settings/canned"] = {
 Lively.Controllers["/admin/settings/introducers"] = {
   before: function() {
     return Lively.find("introducer", {
-      chatbox: Lively.Glob["chatbox"]
+      chatbox: Lively.Vars.chatbox_key
     });
   },
   actions: {
@@ -9425,7 +9621,7 @@ Lively.Controllers["/admin/settings/introducers"] = {
 Lively.Controllers["/admin/settings/triggers"] = {
   before: function() {
     return Lively.find("trigger", {
-      chatbox: Lively.Glob["chatbox"]
+      chatbox: Lively.Vars.chatbox_key
     });
   },
   actions: {
@@ -9446,7 +9642,7 @@ Lively.Controllers["/admin/settings/triggers"] = {
 Lively.Controllers["/admin/visitors"] = {
   before: function() {
     return Lively.find("visitor", {
-      chatbox: Lively.Glob["chatbox"]
+      chatbox: Lively.Vars.chatbox_key
     });
   }
 };
@@ -9454,7 +9650,7 @@ Lively.Controllers["/admin/visitors"] = {
 Lively.Controllers["/admin/visitors/visitor"] = {
   before: function() {
     return Lively.find("visitor", {
-      chatbox: Lively.Glob["chatbox"],
+      chatbox: Lively.Vars.chatbox_key,
       key: Lively.Params["visitor_id"]
     });
   },
@@ -9465,20 +9661,118 @@ Lively.Controllers["/admin/visitors/visitor"] = {
     createMessage: function(form) {
       var data;
       data = form.serializeObject();
-      data._chatbox = Lively.Glob["chatbox"];
+      data._chatbox = Lively.Vars.chatbox_key;
       data._visitor = Lively.Vars.visitor._key;
       return Lively.create("message", data);
     }
   }
 };
 
+Lively.fn.isAdmin = function() {
+  return Lively.Vars.currentUserKey in Lively.Vars.settings.admins;
+};
+
 Lively.Controllers["/application"] = {
   before: function() {
-    return $("body").removeClass("lcs-fixed");
+    $("body").removeClass("lcs-fixed");
+    return Lively.find("chatbox", {
+      key: Lively.Vars.chatbox_key
+    }, "settings");
+  },
+  after: function() {
+    if ("name" in Lively.Vars.settings) {
+      if (!Lively.fn.isAdmin() && Lively.currentPath.indexOf("/admin") !== -1) {
+        return Lively.fetchPath("/chatbox");
+      } else if (Lively.fn.isAdmin() && Lively.currentPath.indexOf("/chatbox") !== -1) {
+        return Lively.fetchPath("/admin");
+      }
+    } else {
+      if (Lively.currentPath.indexOf("/install") === -1) {
+        return Lively.fetchPath("/install");
+      }
+    }
   },
   actions: {
     saveAttrs: function(form) {
       return form.trigger("saveAttrs");
+    },
+    signOut: function() {
+      var message, signout;
+      message = "Are you sure you want to sign out?";
+      if (Lively.fn.isAdmin()) {
+        message = "This will automatically mark you as offline. " + message;
+      }
+      if (confirm(message)) {
+        signout = function() {
+          return Lively.signOut(function() {
+            return Lively.fetchPath("/chatbox");
+          });
+        };
+        if (Lively.fn.isAdmin()) {
+          return Lively.update("/agents/" + Lively.Vars.currentUserKey + "/online", false, function() {
+            return signout();
+          });
+        } else {
+          return signout();
+        }
+      }
+    },
+    signIn: function(form) {
+      return Lively.signInUser(form.serializeObject(), function(error, authData) {
+        if (error) {
+          return alert("Email or Password was invalid.");
+        } else {
+          if (Lively.fn.isAdmin()) {
+            return Lively.fetchPath("/admin");
+          } else {
+            return Lively.fetchPath("/chatbox");
+          }
+        }
+      });
+    }
+  }
+};
+
+Lively.Controllers["/install"] = {
+  before: function() {
+    return $("body").addClass("lcs-fixed");
+  },
+  actions: {
+    createChatbox: function(form) {
+      var data, user;
+      $(Lively.Config.container).find(".isnt_loading").hide();
+      $(Lively.Config.container).find(".is_loading").fadeIn();
+      user = {
+        email: form.find("[name='email']").val(),
+        password: form.find("[name='password']").val()
+      };
+      data = {
+        key: form.find("[name='key']").val(),
+        name: Lively.capitalize(location.host),
+        include: "*",
+        exclude: "",
+        login: {
+          facebook: true
+        }
+      };
+      return Lively.createUserAndSignIn(user, function(error, authData) {
+        if (error) {
+          $(Lively.Config.container).find(".is_loading").hide();
+          $(Lively.Config.container).find(".isnt_loading").fadeIn();
+          return alert("Email or Password was invalid.");
+        } else {
+          return Lively.create("chatbox", data, function() {
+            Lively.update("/settings/admins/" + Lively.Vars.currentUserKey, true);
+            Lively.create("agent", {
+              key: Lively.Vars.currentUserKey,
+              name: Lively.capitalize(user.email).split("@")[0],
+              email: user.email,
+              _chatbox: Lively.Vars.chatbox_key
+            });
+            return Lively.fetchPath("/admin");
+          });
+        }
+      });
     }
   }
 };

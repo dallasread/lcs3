@@ -1,12 +1,5 @@
 #lcs {
-	&.installing {
-		.install_overlay {
-			display: block;
-		}
-	}
-	
 	.install_overlay {
-		display: none;
 		background: #333;
 		background: rgba(0, 0, 0, 0.5);
 		position: fixed;
@@ -18,7 +11,7 @@
 		overflow-y: auto;
 		overflow-x: hidden;
 		-webkit-overflow-scrolling: touch;
-	
+		
 		.install {
 			background: #fff;
 			width: 95%;
@@ -29,11 +22,27 @@
 			box-shadow: 0 0 10px rgba(0, 0, 0, 0.4);
 			position: relative;
 			
+			.is_loading {
+				display: none;
+			}
+			
 			.badge {
 				width: 80px;
 				position: absolute;
 				right: -45px;
 				top: 25px;
+			}
+			
+			.fields {
+				margin-bottom: 30px;
+				
+				.field {
+					margin-bottom: 10px;
+				
+					label {
+						margin-bottom: 3px;
+					}
+				}
 			}
 		}
 	}

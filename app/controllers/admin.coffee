@@ -1,15 +1,19 @@
 Lively.Controllers["/admin"] =
 	before: ->
 		$("body").addClass "lcs-fixed"
-		Lively.find "chatbox", { key: Lively.Glob["chatbox"] }, "settings"
+		Lively.find "agent", { chatbox: Lively.Vars.chatbox_key }
+	
+	after: ->
+		if Lively.Vars["agents"][Lively.Vars.currentUserKey]["online"]
+			$(".toggle_status").removeClass("offline").addClass("online")
 		
 	actions:
 		closeAdmin: ->
 			Lively.fetchPath "/"
 
 		toggleStatus: ->
-			$(".toggle_status").toggleClass "offline"
-			$(".toggle_status").toggleClass "online"
+			$(".toggle_status").toggleClass("offline").toggleClass("online")
+			Lively.update "/agents/#{Lively.Vars.currentUserKey}/online", $(".toggle_status").hasClass("online")
 		
 		delete: (element, data) ->
 			if confirm "Are you sure you want to delete this?"

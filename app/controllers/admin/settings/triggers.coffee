@@ -1,6 +1,6 @@
 Lively.Controllers["/admin/settings/triggers"] =
 	before: ->
-		Lively.find "trigger", { chatbox: Lively.Glob["chatbox"] }
+		Lively.find "trigger", { chatbox: Lively.Vars.chatbox_key }
 	
 	actions:
 		create: ->
