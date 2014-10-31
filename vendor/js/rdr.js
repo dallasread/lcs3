@@ -5409,7 +5409,11 @@ RDR = (function(_super) {
     this.DS = new Firebase(this.DSURL);
     return this.DS.onAuth(function(authData) {
       if (authData) {
-        return r.Vars.currentUserKey = authData.uid;
+        r.Vars.me = {};
+        r.Vars.me.key = authData.uid;
+        if ("password" in authData) {
+          return r.Vars.me.email = authData.password.email;
+        }
       } else {
         return delete r.Vars.currentUserKey;
       }
@@ -5711,6 +5715,9 @@ RDR = (function(_super) {
             value = template(options.data.root);
           } else {
             value = r.escapeQuotes(r.getLocalVarByPath(slashed_key));
+            if (typeof value === "undefined" || value === "null") {
+              value = "";
+            }
           }
           attrs += "" + attr + "=\"" + value + "\"";
         }

@@ -26,9 +26,9 @@ Lively.Controllers["/install"] =
 					alert "Email or Password was invalid."
 				else
 					Lively.create "chatbox", data, ->
-						Lively.update "/settings/admins/#{Lively.Vars.currentUserKey}", true
+						Lively.update "/settings/admins/#{Lively.Vars.me.key}", true
 						Lively.create "agent",
-							key: Lively.Vars.currentUserKey
+							key: Lively.Vars.me.key
 							name: Lively.capitalize(user.email).split("@")[0]
 							email: user.email
 							_chatbox: Lively.Vars.chatbox_key

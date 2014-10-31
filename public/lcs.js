@@ -5410,7 +5410,11 @@ RDR = (function(_super) {
     this.DS = new Firebase(this.DSURL);
     return this.DS.onAuth(function(authData) {
       if (authData) {
-        return r.Vars.currentUserKey = authData.uid;
+        r.Vars.me = {};
+        r.Vars.me.key = authData.uid;
+        if ("password" in authData) {
+          return r.Vars.me.email = authData.password.email;
+        }
       } else {
         return delete r.Vars.currentUserKey;
       }
@@ -5712,6 +5716,9 @@ RDR = (function(_super) {
             value = template(options.data.root);
           } else {
             value = r.escapeQuotes(r.getLocalVarByPath(slashed_key));
+            if (typeof value === "undefined" || value === "null") {
+              value = "";
+            }
           }
           attrs += "" + attr + "=\"" + value + "\"";
         }
@@ -9027,7 +9034,7 @@ this["RDR"]["prototype"]["Templates"]["/admin"] = Handlebars.template({"compiler
 
 this["RDR"]["prototype"]["Templates"]["/admin/agents"] = Handlebars.template({"compiler":[6,">= 2.0.0-beta.1"],"main":function(depth0,helpers,partials,data) {
   var helperMissing=helpers.helperMissing, escapeExpression=this.escapeExpression;
-  return "<div class=\"pane\">\n\n<h2>Agents</h2>\n\n<p>This is a desciprtion of agents. Should you need any help, don't be afraid to ask for it. This is a desciprtion of agents. Should you need any help, don't be afraid to ask for it. </p>\n\n<table class=\"table\">\n<thead>\n<tr>\n<th style=\"width: 11%;\" class=\"align_center\">Online</th>\n<th style=\"width: 25%;\">Name</th>\n<th style=\"width: 54%;\">Email</th>\n<th style=\"width: 10%;\"></th>\n</tr>\n</thead>\n<tbody>\n"
+  return "<div class=\"pane\">\n\n<h2>Agents</h2>\n\n<p>This is a desciprtion of agents. Should you need any help, don't be afraid to ask for it. This is a desciprtion of agents. Should you need any help, don't be afraid to ask for it. </p>\n\n<table class=\"table\">\n<thead>\n<tr>\n<th style=\"width: 11%;\" class=\"align_center\">Online</th>\n<th style=\"width: 30%;\">Name</th>\n<th style=\"width: 49%;\">Email Address</th>\n<th style=\"width: 10%;\"></th>\n</tr>\n</thead>\n<tbody>\n"
     + escapeExpression(((helpers.render || (depth0 && depth0.render) || helperMissing).call(depth0, "agents", {"name":"render","hash":{},"data":data})))
     + "\n</tbody>\n</table>\n\n<div class=\"upper_space\">\n<button "
     + escapeExpression(((helpers.action || (depth0 && depth0.action) || helperMissing).call(depth0, {"name":"action","hash":{
@@ -9115,8 +9122,14 @@ this["RDR"]["prototype"]["Templates"]["/admin/settings/loading"] = Handlebars.te
 
 
 this["RDR"]["prototype"]["Templates"]["/admin/settings/me"] = Handlebars.template({"compiler":[6,">= 2.0.0-beta.1"],"main":function(depth0,helpers,partials,data) {
-  var helperMissing=helpers.helperMissing, escapeExpression=this.escapeExpression;
-  return "<div>\n<form>\n<div class=\"field\">\n<label>What is your <strong>email address</strong>?</label>\n<input type=\"text\">\n</div>\n\n<div class=\"field\">\n<label>What is your <strong>time zone</strong>?</label>\n<input type=\"text\">\n</div>\n\n<button type=\"submit\" class=\"full_width\">Save My Profile</button>\n</form>\n\n<br><button "
+  var stack1, helperMissing=helpers.helperMissing, escapeExpression=this.escapeExpression, lambda=this.lambda;
+  return "<div>\n<form "
+    + escapeExpression(((helpers.action || (depth0 && depth0.action) || helperMissing).call(depth0, {"name":"action","hash":{
+    'submit': ("saveAttrs")
+  },"data":data})))
+    + ">\n<div class=\"field\">\n<label>What is your <strong>email address</strong>?</label>\n<input type=\"email\" value=\""
+    + escapeExpression(lambda(((stack1 = ((stack1 = (depth0 != null ? depth0.Vars : depth0)) != null ? stack1.me : stack1)) != null ? stack1.email : stack1), depth0))
+    + "\">\n</div>\n\n<div class=\"field\">\n<label>What is your new <strong>password</strong> (blank to keep your current password)?</label>\n<input type=\"password\" name=\"password\">\n</div>\n\n<button type=\"submit\" class=\"full_width\">Save My Profile</button>\n</form>\n\n<br><button "
     + escapeExpression(((helpers.action || (depth0 && depth0.action) || helperMissing).call(depth0, {"name":"action","hash":{
     'click': ("signOut")
   },"data":data})))
@@ -9241,17 +9254,39 @@ this["RDR"]["prototype"]["Templates"]["/chatbox/index"] = Handlebars.template({"
 },"5":function(depth0,helpers,partials,data) {
   return "required";
   },"compiler":[6,">= 2.0.0-beta.1"],"main":function(depth0,helpers,partials,data) {
-  var stack1, helper, lambda=this.lambda, escapeExpression=this.escapeExpression, functionType="function", helperMissing=helpers.helperMissing, buffer = "<div>\n<div class=\"topbar\">\n<h1>";
+  var stack1, helper, lambda=this.lambda, escapeExpression=this.escapeExpression, helperMissing=helpers.helperMissing, functionType="function", buffer = "<div>\n<div class=\"topbar\">\n<h1>";
   stack1 = lambda(((stack1 = (depth0 != null ? depth0.settings : depth0)) != null ? stack1.name : stack1), depth0);
   if (stack1 != null) { buffer += stack1; }
   buffer += "</h1>\n\n<a href=\"#/chatbox/signin\" class=\"signin icon\" ";
-  stack1 = helpers['if'].call(depth0, ((stack1 = (depth0 != null ? depth0.Vars : depth0)) != null ? stack1.currentUserKey : stack1), {"name":"if","hash":{},"fn":this.program(1, data),"inverse":this.noop,"data":data});
+  stack1 = helpers['if'].call(depth0, ((stack1 = ((stack1 = (depth0 != null ? depth0.Vars : depth0)) != null ? stack1.me : stack1)) != null ? stack1.key : stack1), {"name":"if","hash":{},"fn":this.program(1, data),"inverse":this.noop,"data":data});
   if (stack1 != null) { buffer += stack1; }
   buffer += "><i class=\"fa fa-lock\"></i></a>\n<a href=\"#/\" class=\"close icon\">&times;</a>\n</div>\n\n<div class=\"header\">\n<div class=\"profile\">\n<img src=\""
     + escapeExpression(lambda(((stack1 = (depth0 != null ? depth0.Vars : depth0)) != null ? stack1.baseURL : stack1), depth0))
-    + "/imgs/avatar.jpg\">\n<p class=\"served_by_description\">\nYou're talking to\n<span class=\"agent_name\">Dallas</span>\n</p>\n</div>\n</div>\n\n<div class=\"messages\">\n<div class=\"overlay\"></div>\n</div>\n\n<form class=\"introducer form\">\n<p class=\"please_introduce\">\nTo start talking with <span class=\"agent_name\">Dallas</span>,<br>please introduce yourself.\n</p>\n\n<button type=\"submit\" class=\"fb_blue\">\nIntroduce Myself through Facebook\n</button>\n\n<p class=\"or\">or</p>\n\n<div class=\"fields\">\n<div class=\"field\">\n<label for=\"field_"
+    + "/imgs/avatar.jpg\">\n<p class=\"served_by_description\">\nYou're talking to\n<span class=\"agent_name\">Dallas</span>\n</p>\n</div>\n</div>\n\n<div class=\"messages\">\n<div class=\"overlay\"></div>\n</div>\n\n<form class=\"introducer form\" "
+    + escapeExpression(((helpers.action || (depth0 && depth0.action) || helperMissing).call(depth0, {"name":"action","hash":{
+    'submit': ("visitorSignInViaEmail")
+  },"data":data})))
+    + ">\n<p class=\"please_introduce\">\nTo start talking with <span class=\"agent_name\">Dallas</span>,<br>please introduce yourself.\n</p>\n\n<button type=\"submit\" class=\"fb_blue\" "
+    + escapeExpression(((helpers.action || (depth0 && depth0.action) || helperMissing).call(depth0, {"name":"action","hash":{
+    'click': ("visitorSignInViaFacebook")
+  },"data":data})))
+    + ">\nIntroduce Myself through Facebook\n</button>\n\n<p class=\"or\">or</p>\n\n<div class=\"fields\">\n<div class=\"field\">\n<label for=\"field_"
     + escapeExpression(((helper = (helper = helpers.name || (depth0 != null ? depth0.name : depth0)) != null ? helper : helperMissing),(typeof helper === functionType ? helper.call(depth0, {"name":"name","hash":{},"data":data}) : helper)))
-    + "\">"
+    + "\" class=\"moving_label\">"
+    + escapeExpression(((helper = (helper = helpers.label || (depth0 != null ? depth0.label : depth0)) != null ? helper : helperMissing),(typeof helper === functionType ? helper.call(depth0, {"name":"label","hash":{},"data":data}) : helper)))
+    + "</label>\n<input type=\"text\" id=\"field_"
+    + escapeExpression(((helper = (helper = helpers.name || (depth0 != null ? depth0.name : depth0)) != null ? helper : helperMissing),(typeof helper === functionType ? helper.call(depth0, {"name":"name","hash":{},"data":data}) : helper)))
+    + "\" name=\""
+    + escapeExpression(((helper = (helper = helpers.name || (depth0 != null ? depth0.name : depth0)) != null ? helper : helperMissing),(typeof helper === functionType ? helper.call(depth0, {"name":"name","hash":{},"data":data}) : helper)))
+    + "\" placeholder=\"First Name\" ";
+  stack1 = helpers['if'].call(depth0, (depth0 != null ? depth0.validator : depth0), {"name":"if","hash":{},"fn":this.program(3, data),"inverse":this.noop,"data":data});
+  if (stack1 != null) { buffer += stack1; }
+  buffer += " ";
+  stack1 = helpers['if'].call(depth0, (depth0 != null ? depth0.required : depth0), {"name":"if","hash":{},"fn":this.program(5, data),"inverse":this.noop,"data":data});
+  if (stack1 != null) { buffer += stack1; }
+  buffer += ">\n</div>\n<div class=\"field\">\n<label for=\"field_"
+    + escapeExpression(((helper = (helper = helpers.name || (depth0 != null ? depth0.name : depth0)) != null ? helper : helperMissing),(typeof helper === functionType ? helper.call(depth0, {"name":"name","hash":{},"data":data}) : helper)))
+    + "\" class=\"moving_label\">"
     + escapeExpression(((helper = (helper = helpers.label || (depth0 != null ? depth0.label : depth0)) != null ? helper : helperMissing),(typeof helper === functionType ? helper.call(depth0, {"name":"label","hash":{},"data":data}) : helper)))
     + "</label>\n<input type=\"text\" id=\"field_"
     + escapeExpression(((helper = (helper = helpers.name || (depth0 != null ? depth0.name : depth0)) != null ? helper : helperMissing),(typeof helper === functionType ? helper.call(depth0, {"name":"name","hash":{},"data":data}) : helper)))
@@ -9278,7 +9313,7 @@ this["RDR"]["prototype"]["Templates"]["/chatbox/signin"] = Handlebars.template({
   stack1 = lambda(((stack1 = (depth0 != null ? depth0.settings : depth0)) != null ? stack1.name : stack1), depth0);
   if (stack1 != null) { buffer += stack1; }
   buffer += "</h1>\n\n<a href=\"#/chatbox\" class=\"signin icon\" ";
-  stack1 = helpers['if'].call(depth0, ((stack1 = (depth0 != null ? depth0.Vars : depth0)) != null ? stack1.currentUserKey : stack1), {"name":"if","hash":{},"fn":this.program(1, data),"inverse":this.noop,"data":data});
+  stack1 = helpers['if'].call(depth0, ((stack1 = ((stack1 = (depth0 != null ? depth0.Vars : depth0)) != null ? stack1.me : stack1)) != null ? stack1.key : stack1), {"name":"if","hash":{},"fn":this.program(1, data),"inverse":this.noop,"data":data});
   if (stack1 != null) { buffer += stack1; }
   return buffer + "><i class=\"fa fa-lock\"></i></a>\n<a href=\"#/\" class=\"close icon\">&times;</a>\n</div>\n\n<form class=\"introducer form\" "
     + escapeExpression(((helpers.action || (depth0 && depth0.action) || helperMissing).call(depth0, {"name":"action","hash":{
@@ -9542,7 +9577,7 @@ Lively.Controllers["/admin"] = {
     });
   },
   after: function() {
-    if (Lively.Vars["agents"][Lively.Vars.currentUserKey]["online"]) {
+    if (Lively.Vars["agents"][Lively.Vars.me.key]["online"]) {
       return $(".toggle_status").removeClass("offline").addClass("online");
     }
   },
@@ -9552,7 +9587,7 @@ Lively.Controllers["/admin"] = {
     },
     toggleStatus: function() {
       $(".toggle_status").toggleClass("offline").toggleClass("online");
-      return Lively.update("/agents/" + Lively.Vars.currentUserKey + "/online", $(".toggle_status").hasClass("online"));
+      return Lively.update("/agents/" + Lively.Vars.me.key + "/online", $(".toggle_status").hasClass("online"));
     },
     "delete": function(element, data) {
       if (confirm("Are you sure you want to delete this?")) {
@@ -9618,6 +9653,14 @@ Lively.Controllers["/admin/settings/introducers"] = {
   }
 };
 
+Lively.Controllers["/admin/settings/me"] = {
+  actions: {
+    create: function() {
+      return false;
+    }
+  }
+};
+
 Lively.Controllers["/admin/settings/triggers"] = {
   before: function() {
     return Lively.find("trigger", {
@@ -9668,22 +9711,43 @@ Lively.Controllers["/admin/visitors/visitor"] = {
   }
 };
 
+Lively.fn.isSignIn = function() {
+  return "me" in Lively.Vars;
+};
+
 Lively.fn.isAdmin = function() {
-  return Lively.Vars.currentUserKey in Lively.Vars.settings.admins;
+  return Lively.fn.isSignIn() && Lively.Vars.me.key in Lively.Vars.settings.admins;
+};
+
+Lively.fn.isAgent = function() {
+  return Lively.fn.isSignIn() && Lively.Vars.me.key in Lively.Vars.agents;
+};
+
+Lively.fn.isOnlineAgent = function() {
+  return Lively.fn.isAgent() && Lively.Vars.agents[Lively.Vars.me.key].online;
 };
 
 Lively.Controllers["/application"] = {
   before: function() {
     $("body").removeClass("lcs-fixed");
-    return Lively.find("chatbox", {
+    Lively.find("chatbox", {
       key: Lively.Vars.chatbox_key
     }, "settings");
+    Lively.find("agent", {
+      chatbox: Lively.Vars.chatbox_key
+    });
+    Lively.find("trigger", {
+      chatbox: Lively.Vars.chatbox_key
+    });
+    return Lively.find("introducer", {
+      chatbox: Lively.Vars.chatbox_key
+    });
   },
   after: function() {
     if ("name" in Lively.Vars.settings) {
-      if (!Lively.fn.isAdmin() && Lively.currentPath.indexOf("/admin") !== -1) {
+      if (!Lively.fn.isAgent() && Lively.currentPath.indexOf("/admin") !== -1) {
         return Lively.fetchPath("/chatbox");
-      } else if (Lively.fn.isAdmin() && Lively.currentPath.indexOf("/chatbox") !== -1) {
+      } else if (Lively.fn.isAgent() && Lively.currentPath.indexOf("/chatbox") !== -1) {
         return Lively.fetchPath("/admin");
       }
     } else {
@@ -9699,7 +9763,7 @@ Lively.Controllers["/application"] = {
     signOut: function() {
       var message, signout;
       message = "Are you sure you want to sign out?";
-      if (Lively.fn.isAdmin()) {
+      if (Lively.fn.isAgent() && Lively.fn.isOnlineAgent()) {
         message = "This will automatically mark you as offline. " + message;
       }
       if (confirm(message)) {
@@ -9708,8 +9772,8 @@ Lively.Controllers["/application"] = {
             return Lively.fetchPath("/chatbox");
           });
         };
-        if (Lively.fn.isAdmin()) {
-          return Lively.update("/agents/" + Lively.Vars.currentUserKey + "/online", false, function() {
+        if (Lively.fn.isAgent()) {
+          return Lively.update("/agents/" + Lively.Vars.me.key + "/online", false, function() {
             return signout();
           });
         } else {
@@ -9722,13 +9786,27 @@ Lively.Controllers["/application"] = {
         if (error) {
           return alert("Email or Password was invalid.");
         } else {
-          if (Lively.fn.isAdmin()) {
+          if (Lively.fn.isAgent()) {
             return Lively.fetchPath("/admin");
           } else {
             return Lively.fetchPath("/chatbox");
           }
         }
       });
+    }
+  }
+};
+
+Lively.Controllers["/chatbox"] = {
+  after: function() {
+    return $(Lively.Config.container).find(".introducer input:visible:first").trigger("focus");
+  },
+  actions: {
+    visitorSignInViaEmail: function(form) {
+      return alert("sign in via email");
+    },
+    visitorSignInViaFacebook: function(form) {
+      return alert("sign in via facebook");
     }
   }
 };
@@ -9762,9 +9840,9 @@ Lively.Controllers["/install"] = {
           return alert("Email or Password was invalid.");
         } else {
           return Lively.create("chatbox", data, function() {
-            Lively.update("/settings/admins/" + Lively.Vars.currentUserKey, true);
+            Lively.update("/settings/admins/" + Lively.Vars.me.key, true);
             Lively.create("agent", {
-              key: Lively.Vars.currentUserKey,
+              key: Lively.Vars.me.key,
               name: Lively.capitalize(user.email).split("@")[0],
               email: user.email,
               _chatbox: Lively.Vars.chatbox_key

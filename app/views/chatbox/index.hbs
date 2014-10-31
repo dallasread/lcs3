@@ -2,7 +2,7 @@
 	<div class="topbar">
 		<h1>{{{ settings.name }}}</h1>
 		
-		<a href="#/chatbox/signin" class="signin icon" {{#if Vars.currentUserKey}}{{action click="signOut"}}{{/if}}><i class="fa fa-lock"></i></a>
+		<a href="#/chatbox/signin" class="signin icon" {{#if Vars.me.key}}{{action click="signOut"}}{{/if}}><i class="fa fa-lock"></i></a>
 		<a href="#/" class="close icon">&times;</a>
 	</div>
 	
@@ -20,12 +20,12 @@
 		<div class="overlay"></div>
 	</div>
 
-	<form class="introducer form">
+	<form class="introducer form" {{action submit="visitorSignInViaEmail"}}>
 		<p class="please_introduce">
 			To start talking with <span class="agent_name">Dallas</span>,<br>please introduce yourself.
 		</p>
 
-		<button type="submit" class="fb_blue">
+		<button type="submit" class="fb_blue" {{action click="visitorSignInViaFacebook"}}>
 			Introduce Myself through Facebook
 		</button>
 
@@ -33,7 +33,11 @@
 
 		<div class="fields">
 			<div class="field">
-				<label for="field_{{ name }}">{{ label }}</label>
+				<label for="field_{{ name }}" class="moving_label">{{ label }}</label>
+				<input type="text" id="field_{{ name }}" name="{{ name }}" placeholder="First Name" {{#if validator}}data-validator="{{ validator }}"{{/if}} {{#if required}}required{{/if}}>
+			</div>
+			<div class="field">
+				<label for="field_{{ name }}" class="moving_label">{{ label }}</label>
 				<input type="text" id="field_{{ name }}" name="{{ name }}" placeholder="First Name" {{#if validator}}data-validator="{{ validator }}"{{/if}} {{#if required}}required{{/if}}>
 			</div>
 		</div>
