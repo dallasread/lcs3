@@ -5408,6 +5408,14 @@ RDR = (function(_super) {
     return this.DS = new Firebase(this.DSURL);
   };
 
+  _Class.prototype.snapshotWithKey = function(snapshot, model) {
+    var data;
+    data = snapshot.val();
+    data._key = snapshot.name();
+    data._model = model;
+    return data;
+  };
+
   _Class.prototype.find = function(model, where, variable) {
     var cached, deferred, m, path, r;
     if (variable == null) {
@@ -5415,10 +5423,10 @@ RDR = (function(_super) {
     }
     r = this;
     m = this.Models[model];
-    if (!variable && !("id" in where)) {
+    if (!variable && !("key" in where)) {
       variable = this.pluralize(model);
     }
-    if (!variable && "id" in where) {
+    if (!variable && "key" in where) {
       variable = model;
     }
     if (typeof m !== "undefined") {
@@ -5428,24 +5436,24 @@ RDR = (function(_super) {
       }
       path = Handlebars.compile(path);
       path = path(where);
-      if ("id" in where) {
-        path = "" + path + "/" + where.id;
+      if ("key" in where) {
+        path = "" + path + "/" + where.key;
       }
       this.varChart[variable] = path;
       cached = this.DSListeners.length && new RegExp(this.DSListeners.join("|")).test(path);
       deferred = this.addDeferred();
       this.DS.child(path).once("value", function(snapshot) {
-        return r.updateLocalVar(variable, snapshot.val(), true);
+        return r.updateLocalVar(variable, r.snapshotWithKey(snapshot, model), true);
       });
       if (cached) {
         this.removeDeferred();
         this.Debug("Listeners", "Read From Cache: " + path);
       } else {
         this.DS.child(path).on("child_changed", function(snapshot) {
-          return r.updateLocalVar("" + variable + "/" + (snapshot.name()), snapshot.val());
+          return r.updateLocalVar("" + variable + "/" + (snapshot.name()), r.snapshotWithKey(snapshot, model));
         });
         this.DS.child(path).on("child_added", function(snapshot) {
-          return r.updateLocalVar("" + variable + "/" + (snapshot.name()), snapshot.val());
+          return r.updateLocalVar("" + variable + "/" + (snapshot.name()), r.snapshotWithKey(snapshot, model));
         });
         this.DS.child(path).on("child_removed", function(snapshot) {
           return r.deleteLocalVar("" + variable + "/" + (snapshot.name()));
@@ -5497,8 +5505,26 @@ RDR = (function(_super) {
   };
 
   _Class.prototype.create = function(key, value) {
-    var path, r;
-    path = this.varPathToDSPath(key);
+    var k, m, path, path_args, r, v;
+    if (key in this.Models) {
+      m = this.Models[this.singularize(key)];
+      path = m.dataPath;
+      if (typeof path === "undefined") {
+        path = model;
+      }
+      path_args = {};
+      for (k in value) {
+        v = value[k];
+        if (k[0] === "_") {
+          delete value[k];
+          path_args[k.slice(1)] = v;
+        }
+      }
+      path = Handlebars.compile(path);
+      path = this.slasherize(path(path_args));
+    } else {
+      path = this.varPathToDSPath(key);
+    }
     if (path) {
       r = this;
       return this.lastCreate = this.DS.child(path).push(value, function(error) {
@@ -5626,6 +5652,21 @@ RDR = (function(_super) {
     return [in_loop, path];
   };
 
+  _Class.prototype.getLocalVarNameByVariable = function(path) {
+    var p, vars, _i, _len, _ref;
+    path = this.dotterize(path);
+    vars = this.Vars;
+    _ref = path.split(".");
+    for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+      p = _ref[_i];
+      if (p in this.varChart) {
+        path = path.replace(p, this.varChart[p]);
+        break;
+      }
+    }
+    return this.slasherize(path);
+  };
+
   _Class.prototype.handlebarsHelpers = function() {
     var r;
     r = this;
@@ -5677,20 +5718,25 @@ RDR = (function(_super) {
       var collection, first, html, k, options, output, path, template, v, variable, _i;
       variable = arguments[0], template = 3 <= arguments.length ? __slice.call(arguments, 1, _i = arguments.length - 1) : (_i = 1, []), options = arguments[_i++];
       output = "";
-      variable = r.dotterize(variable);
+      if (variable.split(".").length > 1) {
+        variable = r.getLocalVarNameByVariable(r.dotterize(variable));
+      } else {
+        variable = r.dotterize(variable);
+      }
       collection = r.getLocalVarByPath(variable);
+      collection || (collection = {});
       if (typeof template === "object") {
         template = template[0];
       }
       if (typeof template !== "string") {
         first = collection[Object.keys(collection)[0]];
-        path = r.singularize(typeof first !== "undefined" ? first._parent_key : variable);
-        path = r.slasherize(path);
-        template = "/partials" + path;
+        path = typeof first === "object" && "_parent_key" in first ? first._parent_key : variable;
+        template = r.slasherize(r.singularize(path.substring(path.lastIndexOf("/"))));
+        template = "/partials" + template;
       }
-      if (template in r.Templates) {
+      if (typeof template !== "undefined" && template in r.Templates) {
         variable = r.slasherize(variable);
-        output += "<script data-rdr-collection-first=\"" + variable + "\" data-template=\"" + template + "\"></script>";
+        output += "<script data-rdr-collection-first=\"" + variable + "\" data-template=\"" + template + "\"></script>" + variable;
         for (k in collection) {
           v = collection[k];
           if (k[0] !== "_") {
@@ -5925,8 +5971,48 @@ RDR = (function(_super) {
     return this.prepareVars("", this.Vars, true);
   };
 
-  _Class.prototype.prepareVars = function(parent_key, parent_value, synchronous) {
+  _Class.prototype.applyVars = function(parent_key, parent_value, synchronous) {
     var key, value, var_key;
+    if (parent_key == null) {
+      parent_key = "";
+    }
+    if (parent_value == null) {
+      parent_value = {};
+    }
+    if (synchronous == null) {
+      synchronous = false;
+    }
+    for (key in parent_value) {
+      value = parent_value[key];
+      var_key = "";
+      var_key += parent_key;
+      if (var_key.length) {
+        var_key += "/";
+      }
+      var_key += key;
+      if (typeof value === "object") {
+        value._key = key;
+        value._path = this.slasherize(var_key);
+        value._parent_key = this.slasherize(parent_key);
+        this.prepareVars(var_key, value, synchronous);
+      } else {
+        if (synchronous) {
+          this.addDeferred();
+        }
+        this.setLocalVarByPath(this.Vars, var_key, value);
+        value = "<span data-rdr-bind-html='" + var_key + "'>" + value + "</span>";
+        if (synchronous) {
+          this.addDeferred();
+        }
+        this.setLocalVarByPath(this.synchronousVars, var_key, value);
+      }
+    }
+    if (synchronous) {
+      return this.DSDeferred.promise;
+    }
+  };
+
+  _Class.prototype.prepareVars = function(parent_key, parent_value, synchronous) {
     if (parent_key == null) {
       parent_key = "";
     }
@@ -5943,31 +6029,14 @@ RDR = (function(_super) {
           parent_value._path = parent_key;
           parent_value._parent_key = parent_value._path.substr(0, parent_value._path.lastIndexOf("/"));
         }
-        for (key in parent_value) {
-          value = parent_value[key];
-          var_key = "";
-          var_key += parent_key;
-          if (var_key.length) {
-            var_key += "/";
-          }
-          var_key += key;
-          if (typeof value === "object") {
-            value._key = key;
-            value._path = this.slasherize(var_key);
-            value._parent_key = this.slasherize(parent_key);
-            this.prepareVars(var_key, value, synchronous);
+        if (this.applyVars(parent_key, parent_value, synchronous)) {
+          if (synchronous) {
+            this.removeDeferred();
+            return this.synchronousVars;
           } else {
-            this.setLocalVarByPath(this.Vars, var_key, value);
-            value = "<span data-rdr-bind-html='" + var_key + "'>" + value + "</span>";
-            this.setLocalVarByPath(this.synchronousVars, var_key, value);
+            this.updateView(parent_key, parent_value);
+            return this.Vars;
           }
-        }
-        if (synchronous) {
-          this.removeDeferred();
-          return this.synchronousVars;
-        } else {
-          this.updateView(parent_key, parent_value);
-          return this.Vars;
         }
       }
     }
@@ -6005,10 +6074,11 @@ RDR = (function(_super) {
   };
 
   _Class.prototype.getLocalVarByPath = function(path_str, clone) {
-    var o, p, path, vars, _i, _len;
+    var fail, o, p, path, vars, _i, _len;
     if (clone == null) {
       clone = true;
     }
+    fail = false;
     o = "";
     path_str = this.dotterize(path_str);
     path = path_str.split(".");
@@ -6017,9 +6087,16 @@ RDR = (function(_super) {
       p = path[_i];
       if (typeof vars === "object" && p in vars) {
         vars = vars[p];
+      } else {
+        fail = true;
+        break;
       }
     }
-    return vars;
+    if (fail) {
+      return null;
+    } else {
+      return vars;
+    }
   };
 
   _Class.prototype.setLocalVarByPath = function(obj, path_str, value) {
@@ -6037,6 +6114,7 @@ RDR = (function(_super) {
       obj = obj[elem];
       i++;
     }
+    this.removeDeferred();
     return obj[pList[len - 1]] = value;
   };
 
@@ -8450,6 +8528,47 @@ RDR = (function(_super) {
 
 })();
 
+//
+// Use internal $.serializeArray to get list of form elements which is
+// consistent with $.serialize
+//
+// From version 2.0.0, $.serializeObject will stop converting [name] values
+// to camelCase format. This is *consistent* with other serialize methods:
+//
+//   - $.serialize
+//   - $.serializeArray
+//
+// If you require camel casing, you can either download version 1.0.4 or map
+// them yourself.
+//
+
+(function($){
+	$.fn.serializeObject = function () {
+		"use strict";
+
+		var result = {};
+		var extend = function (i, element) {
+			var node = result[element.name];
+
+	// If node with same name exists already, need to convert it to an array as it
+	// is a multi-value field (i.e., checkboxes)
+
+			if ('undefined' !== typeof node && node !== null) {
+				if ($.isArray(node)) {
+					node.push(element.value);
+				} else {
+					result[element.name] = [node, element.value];
+				}
+			} else {
+				result[element.name] = element.value;
+			}
+		};
+
+		$.each(this.serializeArray(), extend);
+		return result;
+	};
+})(jQuery);
+
 // tipsy, facebook style tooltips for jquery
 // version 1.0.0a
 // (c) 2008-2010 jason frame [jason@onehackoranother.com]
@@ -8988,12 +9107,12 @@ this["RDR"]["prototype"]["Templates"]["/admin/visitors/visitor"] = Handlebars.te
   stack1 = ((helper = (helper = helpers.address || (depth0 != null ? depth0.address : depth0)) != null ? helper : helperMissing),(typeof helper === functionType ? helper.call(depth0, {"name":"address","hash":{},"data":data}) : helper));
   if (stack1 != null) { buffer += stack1; }
   return buffer + "</span>\n<span class=\"clear\"></span>\n</p>\n<p>\n<span class=\"more_label\">Last Seen</span>\n<span class=\"more_detail\"><span >10 minutes ago</span></span>\n<span class=\"clear\"></span>\n</p>\n<div class=\"clear\"></div>\n</div>\n</div>\n\n<div class=\"visitor_profile_messages\">\n"
-    + escapeExpression(((helpers.render || (depth0 && depth0.render) || helperMissing).call(depth0, "visitor.messages", "/partials/message", {"name":"render","hash":{},"data":data})))
-    + "\n</div>\n\n<form class=\"visitor_new_message\">\n"
-    + escapeExpression(((helpers.textarea || (depth0 && depth0.textarea) || helperMissing).call(depth0, {"name":"textarea","hash":{
-    'value': ((depth0 != null ? depth0.body : depth0))
+    + escapeExpression(((helpers.render || (depth0 && depth0.render) || helperMissing).call(depth0, "visitor.messages", {"name":"render","hash":{},"data":data})))
+    + "\n</div>\n\n<form class=\"visitor_new_message\" "
+    + escapeExpression(((helpers.action || (depth0 && depth0.action) || helperMissing).call(depth0, {"name":"action","hash":{
+    'submit': ("createMessage")
   },"data":data})))
-    + "\n<button type=\"submit\">Send</button>\n</form>\n";
+    + ">\n<textarea name=\"body\"></textarea>\n<button type=\"submit\">Send</button>\n</form>\n";
 },"useData":true});
 
 
@@ -9241,7 +9360,7 @@ Lively.Controllers["/admin"] = {
   before: function() {
     $("body").addClass("lcs-fixed");
     return Lively.find("chatbox", {
-      id: Lively.Glob["chatbox"]
+      key: Lively.Glob["chatbox"]
     }, "settings");
   },
   actions: {
@@ -9349,11 +9468,20 @@ Lively.Controllers["/admin/visitors/visitor"] = {
   before: function() {
     return Lively.find("visitor", {
       chatbox: Lively.Glob["chatbox"],
-      id: Lively.Params["visitor_id"]
+      key: Lively.Params["visitor_id"]
     });
   },
   after: function() {
     return Lively["delete"]("visitors/" + Lively.Params["visitor_id"] + "/has_unread");
+  },
+  actions: {
+    createMessage: function(form) {
+      var data;
+      data = form.serializeObject();
+      data._chatbox = Lively.Glob["chatbox"];
+      data._visitor = Lively.Vars.visitor._key;
+      return Lively.create("message", data);
+    }
   }
 };
 
@@ -9413,7 +9541,7 @@ Lively.Models["introducer"] = {
 };
 
 Lively.Models["message"] = {
-  dataPath: "visitors/{{chatbox}}/{{visitor}}/messages",
+  dataPath: "messages/{{chatbox}}/{{visitor}}",
   fields: {
     chatbox: "belongs_to",
     visitor: "belongs_to",
