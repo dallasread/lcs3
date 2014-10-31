@@ -5676,7 +5676,8 @@ RDR = (function(_super) {
       var collection, first, html, k, options, output, path, template, v, variable, _i;
       variable = arguments[0], template = 3 <= arguments.length ? __slice.call(arguments, 1, _i = arguments.length - 1) : (_i = 1, []), options = arguments[_i++];
       output = "";
-      collection = r.Vars[variable];
+      variable = r.dotterize(variable);
+      collection = r.getLocalVarByPath(variable);
       if (typeof template === "object") {
         template = template[0];
       }
@@ -5687,13 +5688,16 @@ RDR = (function(_super) {
         template = "/partials" + path;
       }
       if (template in r.Templates) {
-        output += "<script class=\"rdr-collection-first-" + variable + "\" data-template=\"" + template + "\"></script>";
+        variable = r.slasherize(variable);
+        output += "<script data-rdr-collection-first=\"" + variable + "\" data-template=\"" + template + "\"></script>";
         for (k in collection) {
           v = collection[k];
-          html = r.buildPartial(template, v, "" + variable + "/" + k);
-          output += html;
+          if (k[0] !== "_") {
+            html = r.buildPartial(template, v, "" + variable + "/" + k);
+            output += html;
+          }
         }
-        output += "<script class=\"rdr-collection-last-" + variable + "\" data-template=\"" + template + "\"></script>";
+        output += "<script data-rdr-collection-last=\"" + variable + "\" data-template=\"" + template + "\"></script>";
       } else {
         r.Warn("Partials", "Not Found: " + template);
       }
@@ -5932,40 +5936,39 @@ RDR = (function(_super) {
       synchronous = false;
     }
     parent_key = this.slasherize(parent_key);
-    if (!synchronous && parent_key.replace(/\//g, "").length && typeof parent_value === "object") {
-      parent_value._path = parent_key;
-      parent_value._parent_key = parent_value._path.substr(0, parent_value._path.lastIndexOf("/"));
-    }
-    if (typeof parent_value === "object" && !Object.keys(parent_value).length) {
-      this.setLocalVarByPath(this.Vars, parent_key, {});
-      this.setLocalVarByPath(this.synchronousVars, parent_key, {});
-    } else {
-      for (key in parent_value) {
-        value = parent_value[key];
-        var_key = "";
-        var_key += parent_key;
-        if (var_key.length) {
-          var_key += "/";
+    if (this.setLocalVarByPath(this.Vars, parent_key, {})) {
+      if (this.setLocalVarByPath(this.synchronousVars, parent_key, {})) {
+        if (!synchronous && parent_key.replace(/\//g, "").length && typeof parent_value === "object") {
+          parent_value._path = parent_key;
+          parent_value._parent_key = parent_value._path.substr(0, parent_value._path.lastIndexOf("/"));
         }
-        var_key += key;
-        if (typeof value === "object") {
-          value._key = key;
-          value._path = this.slasherize(var_key);
-          value._parent_key = this.slasherize(parent_key);
-          this.prepareVars(var_key, value, synchronous);
+        for (key in parent_value) {
+          value = parent_value[key];
+          var_key = "";
+          var_key += parent_key;
+          if (var_key.length) {
+            var_key += "/";
+          }
+          var_key += key;
+          if (typeof value === "object") {
+            value._key = key;
+            value._path = this.slasherize(var_key);
+            value._parent_key = this.slasherize(parent_key);
+            this.prepareVars(var_key, value, synchronous);
+          } else {
+            this.setLocalVarByPath(this.Vars, var_key, value);
+            value = "<span data-rdr-bind-html='" + var_key + "'>" + value + "</span>";
+            this.setLocalVarByPath(this.synchronousVars, var_key, value);
+          }
+        }
+        if (synchronous) {
+          this.removeDeferred();
+          return this.synchronousVars;
         } else {
-          this.setLocalVarByPath(this.Vars, var_key, value);
-          value = "<span data-rdr-bind-html='" + var_key + "'>" + value + "</span>";
-          this.setLocalVarByPath(this.synchronousVars, var_key, value);
+          this.updateView(parent_key, parent_value);
+          return this.Vars;
         }
       }
-    }
-    if (synchronous) {
-      this.removeDeferred();
-      return this.synchronousVars;
-    } else {
-      this.updateView(parent_key, parent_value);
-      return this.Vars;
     }
   };
 
@@ -6163,7 +6166,7 @@ RDR = (function(_super) {
           }
           return _results;
         } else {
-          placer = $("script.rdr-collection-last-" + (path.split("/")[1]));
+          placer = $("script[data-rdr-collection-last='" + (path.split("/")[1]) + "']");
           template = placer.attr("data-template");
           value._path = path;
           html = this.buildPartial(template, value, path);
