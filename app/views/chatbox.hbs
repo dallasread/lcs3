@@ -1,13 +1,10 @@
 <div class="chatbox">
-	{{{ outlet }}}
-	
-	<div class="prompter">
-		<div class="agent_avatar">
-			<p class="unread_messages_count">3</p>
-			<img src="{{ Vars.baseURL }}/imgs/avatar.jpg">
-		</div>
-		<p class="bubble">
-			I was wondering if you had any 3rd apples to display to the crew.
-		</p>
+	<div class="topbar">
+		<h1>{{{ settings.name }}}</h1>
+		
+		<a class="signinout icon"><i class="fa fa-lock"></i></a>
+		<a href="#/" class="close icon">&times;</a>
 	</div>
+	
+	{{{ outlet }}}
 </div>

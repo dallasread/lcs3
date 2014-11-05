@@ -3,7 +3,13 @@
 	<td><input type="text" {{bind-attr value="permalink" event="blur"}}></td>
 	<td><input type="text" {{bind-attr value="required" event="blur"}}></td>
 	<td><input type="text" {{bind-attr value="type" event="blur"}}></td>
-	<td><input type="text" {{bind-attr value="validator" event="blur"}}></td>
+	<td>
+		<select {{bind-attr value="validator" event="change"}}>
+			<option value="" {{#is validator "email"}}selected="selected"{{/is}}>None</option>
+			<option value="presence" {{#is validator "presence"}}selected="selected"{{/is}}>Exists</option>
+			<option value="email" {{#is validator "email"}}selected="selected"{{/is}}>Email Address</option>
+		</select>
+	</td>
 	<td><input type="text" {{bind-attr value="ordinal" event="blur"}}></td>
 	<td>
 		<button class="fluid_width small gray red_hover" {{action click="delete"}}>

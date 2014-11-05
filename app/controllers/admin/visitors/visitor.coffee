@@ -6,10 +6,3 @@ Lively.Controllers["/admin/visitors/visitor"] =
 	
 	after: ->
 		Lively.delete "visitors/#{Lively.Params["visitor_id"]}/has_unread"
-	
-	actions:
-		createMessage: (form) ->
-			data = form.serializeObject()
-			data._chatbox = Lively.Vars.chatbox_key
-			data._visitor = Lively.Vars.visitor._key
-			Lively.create "message", data

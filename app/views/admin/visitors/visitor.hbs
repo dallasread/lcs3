@@ -8,15 +8,15 @@
 		
 	<div class="info">
 		<h2 class="name">
-			{{{ visitor.name }}}
+			{{{ visitor.data.name }}}
 			<span class="show_more">more...</span>
 		</h2>
 		
-		<h3 class="location">{{{ location }}}</h3>
+		<h3 class="location">{{{ visitor.location }}}</h3>
 		
 		<p>
 			Served by:
-			{{{ agent.name }}}
+			{{{ visitor.agent.name }}}
 		</p>
 			
 		<ul class="tags">
@@ -30,26 +30,15 @@
 	</div>
 	
 	<div class="more">
-		<p>
-			<span class="more_label">Email</span>
-			<span class="more_detail">{{{ email }}}</span>
-			<span class="clear"></span>
-		</p>
-		<p>
-			<span class="more_label">Phone</span>
-			<span class="more_detail">{{{ mobile }}}</span>
-			<span class="clear"></span>
-		</p>
-		<p>
-			<span class="more_label">IP</span>
-			<span class="more_detail">{{{ ip }}}</span>
-			<span class="clear"></span>
-		</p>
-		<p>
-			<span class="more_label">Address</span>
-			<span class="more_detail">{{{ address }}}</span>
-			<span class="clear"></span>
-		</p>
+		{{#each visitor.data}}
+			{{#firstcharisnt @key "_"}}
+				<p>
+					<span class="more_label">{{{@key}}}</span>
+					<span class="more_detail">{{{this}}}</span>
+					<span class="clear"></span>
+				</p>
+			{{/firstcharisnt}}
+		{{/each}}
 		<p>
 			<span class="more_label">Last Seen</span>
 			<span class="more_detail"><span {{!bind-attr title=updated_at}}>10 minutes ago</span></span>

@@ -1,0 +1,101 @@
+{
+	"rules": {
+		".read": true,
+		"chatboxes": {
+		  "$chatbox_id": {
+				"name": {
+				  ".write": "root.child('agents/' + $chatbox_id + '/' + auth.uid).exists()",
+				  ".validate": "newData.isString() && newData.val().length > 0"
+				},
+				"exclude": {
+				  ".write": "root.child('agents/' + $chatbox_id + '/' + auth.uid).exists()"
+				},
+				"include": {
+				  ".write": "root.child('agents/' + $chatbox_id + '/' + auth.uid).exists()"
+				},
+				"admins": {
+				  ".write": "!root.child('agents/' + $chatbox_id).exists()"
+				},
+				"login": {
+					"facebook": {
+					  ".write": "root.child('agents/' + $chatbox_id + '/' + auth.uid).exists()"
+					},
+				},
+				"$other": { ".validate": false }
+		  }
+		},
+		"agents": {
+		  "$chatbox_id": {
+				"$agent_id": {
+					".write": "$agent_id == auth.uid || !root.child('agents/' + $chatbox_id).exists()",
+					"name": { ".validate": true },
+					"email": { ".validate": true },
+					"online": { ".validate": true },
+					"$other": { ".validate": false }
+				}
+			}
+		},
+		"visitors": {
+		  "$chatbox_id": {
+				"$visitor_id": {
+					".read": "root.child('agents/' + $chatbox_id + '/' + auth.uid).exists() || $visitor_id == auth.uid",
+					".write": "root.child('agents/' + $chatbox_id + '/' + auth.uid).exists() || $visitor_id == auth.uid || !root.child('visitors/' + $chatbox_id + '/' + $visitor_id).exists()",
+					"data": { ".validate": true },
+					"online": { ".validate": "$visitor_id == auth.uid" },
+					"has_unread": { ".validate": true },
+					"$other": { ".validate": false }
+				}
+			}
+		},
+		"messages": {
+		  "$chatbox_id": {
+				"$visitor_id": {
+					".read": "root.child('agents/' + $chatbox_id + '/' + auth.uid).exists() || $visitor_id == auth.uid",
+					".write": "root.child('agents/' + $chatbox_id + '/' + auth.uid).exists() || $visitor_id == auth.uid",
+					"body": { ".validate": "newData.isString() && newData.val().length > 0" },
+					"$other": { ".validate": false }
+				}
+			}
+		},
+		"canned": {
+		  "$chatbox_id": {
+				"$canned_id": {
+					".write": "root.child('agents/' + $chatbox_id + '/' + auth.uid).exists()",
+					"hash": { ".validate": "newData.isString() && newData.val().length > 0" },
+					"message": {
+						"body": { ".validate": "newData.isString() && newData.val().length > 0" },
+						"$other": { ".validate": false }
+					},
+					"$other": { ".validate": false }
+				}
+			}
+		},
+		"introducers": {
+		  "$chatbox_id": {
+				"$introducer_id": {
+					".write": "root.child('agents/' + $chatbox_id + '/' + auth.uid).exists()",
+					"name": { ".validate": "newData.isString() && newData.val().length > 0" },
+					"permalink": { ".validate": "newData.isString() && newData.val().length > 0" },
+					"type": { ".validate": "newData.isString() && newData.val().length > 0" },
+					"ordinal": { ".validate": true },
+					"required": { ".validate": true },
+					"validator": { ".validate": true },
+					"$other": { ".validate": false }
+				}
+			}
+		},
+		"triggers": {
+		  "$chatbox_id": {
+				"$trigger_id": {
+					".write": "root.child('agents/' + $chatbox_id + '/' + auth.uid).exists()",
+					"active": { ".validate": true },
+					"delay": { ".validate": true },
+					"exclude": { ".validate": true },
+					"include": { ".validate": true },
+					"$other": { ".validate": false }
+				}
+			}
+		},
+		"$other": { ".validate": false }
+	}
+}

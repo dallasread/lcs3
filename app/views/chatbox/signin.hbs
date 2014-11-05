@@ -1,11 +1,4 @@
 <div>
-	<div class="topbar">
-		<h1>{{{ settings.name }}}</h1>
-		
-		<a href="#/chatbox" class="signin icon" {{#if Vars.me.key}}{{action click="signOut"}}{{/if}}><i class="fa fa-lock"></i></a>
-		<a href="#/" class="close icon">&times;</a>
-	</div>
-
 	<form class="introducer form" {{action submit="signIn"}}>
 		<p class="please_introduce">
 			To sign in as an agent, please enter your credentials below.

@@ -1,8 +1,9 @@
 Lively.Routes =
+	"/install": true
+	"/prompter": true
 	"/chatbox":
 		"/signin": true
-		"/prompter": true
-	"/install": true
+		"/register": true
 	"/admin":
 		"/visitors":
 			"/:visitor_id": "visitor"

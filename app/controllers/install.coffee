@@ -4,8 +4,8 @@ Lively.Controllers["/install"] =
 		
 	actions:
 		createChatbox: (form) ->
-			$(Lively.Config.container).find(".isnt_loading").hide()
-			$(Lively.Config.container).find(".is_loading").fadeIn()
+			$(Lively.Config.container).find(".install .isnt_loading").hide()
+			$(Lively.Config.container).find(".install .is_loading").fadeIn()
 			
 			user =
 				email: form.find("[name='email']").val()
@@ -26,9 +26,9 @@ Lively.Controllers["/install"] =
 					alert "Email or Password was invalid."
 				else
 					Lively.create "chatbox", data, ->
-						Lively.update "/settings/admins/#{Lively.Vars.me.key}", true
+						Lively.update "/settings/admins/#{Lively.Vars.me._key}", true
 						Lively.create "agent",
-							key: Lively.Vars.me.key
+							key: Lively.Vars.me._key
 							name: Lively.capitalize(user.email).split("@")[0]
 							email: user.email
 							_chatbox: Lively.Vars.chatbox_key

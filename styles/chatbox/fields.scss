@@ -9,24 +9,22 @@
 			
 				.field_error {
 					position: absolute;
-					right: 5px;
-					text-align: right;
-					bottom: 5px;
 					color: #8B000B;
+					bottom: 3px;
+					right: 5px;
 					font-size: 10px;
 					line-height: 13px;
-					border-radius: 4px;
 				}
 			
 				.moving_label {
-					position: absolute;
 					display: none;
+					position: absolute;
+					color: #aaa;
 					right: 5px;
 					margin-top: 6px;
 					margin-bottom: 0;
 					font-size: 10px;
 					line-height: 10px;
-					color: #aaa;
 				}
 			}
 		}
