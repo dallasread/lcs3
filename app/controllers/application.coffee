@@ -17,6 +17,7 @@ Lively.Controllers["/application"] =
 		Lively.find "chatbox", { key: Lively.Vars.chatbox_key }, "settings"
 		Lively.find "trigger", { chatbox: Lively.Vars.chatbox_key }
 		Lively.find "introducer", { chatbox: Lively.Vars.chatbox_key }
+		Lively.find "canned", { chatbox: Lively.Vars.chatbox_key } # IF ADMIN
 	
 	after: ->
 		unless "name" of Lively.Vars.settings
@@ -32,8 +33,8 @@ Lively.Controllers["/application"] =
 			
 			if confirm message
 				signout = ->
-					delete Lively.Vars.me
 					Lively.signOut ->
+						delete Lively.Vars.me
 						Lively.fetchPath "/chatbox/register"
 			
 				if Lively.fn.isAgent()
@@ -59,6 +60,12 @@ Lively.Controllers["/application"] =
 				data.from_agent = true
 				data.agent = Lively.Vars.me._key
 				data._visitor = Lively.Vars.visitor._key
+				hashes = "#{data.body}".match(/\#[a-zA-Z0-9_]*/g)
+				if hashes
+					for hash in hashes
+						simple_hash = hash.replace("#", "")
+						canned = _.findWhere Lively.Vars.canned, { hash: simple_hash }
+						data.body = data.body.replace hash, canned.message.body if canned && "message" of canned
 			else
 				data._visitor = Lively.Vars.me._key
 			Lively.create "message", data

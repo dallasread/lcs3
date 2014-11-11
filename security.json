@@ -1,10 +1,10 @@
 {
 	"rules": {
-		".read": true,
 		"chatboxes": {
+		  ".read": true,
 		  "$chatbox_id": {
 				"name": {
-				  ".write": "root.child('agents/' + $chatbox_id + '/' + auth.uid).exists()",
+				  ".write": "root.child('agents/' + $chatbox_id + '/' + auth.uid).exists() || !root.child('agents/' + $chatbox_id).exists()",
 				  ".validate": "newData.isString() && newData.val().length > 0"
 				},
 				"exclude": {
@@ -14,22 +14,23 @@
 				  ".write": "root.child('agents/' + $chatbox_id + '/' + auth.uid).exists()"
 				},
 				"admins": {
-				  ".write": "!root.child('agents/' + $chatbox_id).exists()"
+				  ".write": "root.child('chatboxes/' + $chatbox_id + '/admins/' + auth.uid).exists() || !root.child('agents/' + $chatbox_id).exists()"
 				},
 				"login": {
 					"facebook": {
 					  ".write": "root.child('agents/' + $chatbox_id + '/' + auth.uid).exists()"
-					},
+					}
 				},
 				"$other": { ".validate": false }
 		  }
 		},
 		"agents": {
+		  ".read": true,
 		  "$chatbox_id": {
 				"$agent_id": {
-					".write": "$agent_id == auth.uid || !root.child('agents/' + $chatbox_id).exists()",
-					"name": { ".validate": true },
-					"email": { ".validate": true },
+				  ".write": "$agent_id == auth.uid || root.child('agents/' + $chatbox_id + '/' + auth.uid).exists()",
+					"name": { ".validate": "(!data.exists() && newData.exists()) || (newData.isString() && newData.val().length > 0)" },
+					"email": { ".validate": "(!data.exists() && newData.exists()) || (newData.isString() && newData.val().length > 0)" },
 					"online": { ".validate": true },
 					"$other": { ".validate": false }
 				}
@@ -37,6 +38,7 @@
 		},
 		"visitors": {
 		  "$chatbox_id": {
+		    ".read": "auth !== null",
 				"$visitor_id": {
 					".read": "root.child('agents/' + $chatbox_id + '/' + auth.uid).exists() || $visitor_id == auth.uid",
 					".write": "root.child('agents/' + $chatbox_id + '/' + auth.uid).exists() || $visitor_id == auth.uid || !root.child('visitors/' + $chatbox_id + '/' + $visitor_id).exists()",
@@ -48,22 +50,28 @@
 			}
 		},
 		"messages": {
+		  ".read": "auth !== null",
+		  ".write": "auth !== null",
 		  "$chatbox_id": {
 				"$visitor_id": {
 					".read": "root.child('agents/' + $chatbox_id + '/' + auth.uid).exists() || $visitor_id == auth.uid",
-					".write": "root.child('agents/' + $chatbox_id + '/' + auth.uid).exists() || $visitor_id == auth.uid",
-					"body": { ".validate": "newData.isString() && newData.val().length > 0" },
-					"$other": { ".validate": false }
+				  "$message_id": {
+					  ".write": "root.child('agents/' + $chatbox_id + '/' + auth.uid).exists() || $visitor_id == auth.uid",
+					  "body": { ".validate": true },
+					  "from_agent": { ".validate": "root.child('agents/' + $chatbox_id + '/' + auth.uid).exists()" },
+					  "agent": { ".validate": "root.child('agents/' + $chatbox_id + '/' + auth.uid).exists()" }
+				  }
 				}
 			}
 		},
 		"canned": {
+		  ".read": true,
 		  "$chatbox_id": {
 				"$canned_id": {
 					".write": "root.child('agents/' + $chatbox_id + '/' + auth.uid).exists()",
-					"hash": { ".validate": "newData.isString() && newData.val().length > 0" },
+					"hash": { ".validate": "(!data.exists() && newData.exists()) || (newData.isString() && newData.val().length > 0)" },
 					"message": {
-						"body": { ".validate": "newData.isString() && newData.val().length > 0" },
+						"body": { ".validate": "(!data.exists() && newData.exists()) || (newData.isString() && newData.val().length > 0)" },
 						"$other": { ".validate": false }
 					},
 					"$other": { ".validate": false }
@@ -71,12 +79,13 @@
 			}
 		},
 		"introducers": {
+		  ".read": true,
 		  "$chatbox_id": {
 				"$introducer_id": {
 					".write": "root.child('agents/' + $chatbox_id + '/' + auth.uid).exists()",
-					"name": { ".validate": "newData.isString() && newData.val().length > 0" },
-					"permalink": { ".validate": "newData.isString() && newData.val().length > 0" },
-					"type": { ".validate": "newData.isString() && newData.val().length > 0" },
+					"name": { ".validate": "(!data.exists() && newData.exists()) || (newData.isString() && newData.val().length > 0)" },
+					"permalink": { ".validate": "(!data.exists() && newData.exists()) || (newData.isString() && newData.val().length > 0)" },
+					"type": { ".validate": "(!data.exists() && newData.exists()) || (newData.isString() && newData.val().length > 0)" },
 					"ordinal": { ".validate": true },
 					"required": { ".validate": true },
 					"validator": { ".validate": true },
@@ -85,13 +94,18 @@
 			}
 		},
 		"triggers": {
+		  ".read": true,
 		  "$chatbox_id": {
 				"$trigger_id": {
 					".write": "root.child('agents/' + $chatbox_id + '/' + auth.uid).exists()",
-					"active": { ".validate": true },
-					"delay": { ".validate": true },
+					"active": { ".validate": "newData.isBoolean()" },
+					"delay": { ".validate": "(!data.exists() && newData.exists()) || (newData.isString() && newData.val().length > 0)" },
 					"exclude": { ".validate": true },
 					"include": { ".validate": true },
+					"message": {
+						"body": { ".validate": "(!data.exists() && newData.exists()) || (newData.isString() && newData.val().length > 0)" },
+						"$other": { ".validate": false }
+					},
 					"$other": { ".validate": false }
 				}
 			}

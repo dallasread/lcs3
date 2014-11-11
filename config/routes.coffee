@@ -8,7 +8,7 @@ Lively.Routes =
 		"/visitors":
 			"/:visitor_id": "visitor"
 		"/agents": true
-		"/upgrade": true
+		"/activate": true
 		"/setup": true
 		"/settings":
 			"/triggers": true

@@ -1,6 +1,12 @@
 Lively.customEvents = ->
 	lcs = $(Lively.Config.container)
 	
+	lcs.on "keydown", ".visitor_new_message textarea", (e) ->
+		code = e.keyCode || e.which
+		if code == 13
+			$(this).closest("form").trigger "submit"
+			false
+	
 	lcs.on "keyup", ".has_moving_label input, .has_moving_label textarea", ->
 		field = $(this).closest(".field")
 		label = field.find(".moving_label")

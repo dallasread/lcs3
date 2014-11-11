@@ -8,3 +8,5 @@ Lively.Controllers["/admin/settings/canned"] =
 				hash: ""
 				message:
 					body: ""
+			, ->
+				$(Lively.Config.container).find(".canned tbody tr:visible:last input:visible, .canned tbody tr:visible:last textarea:visible").first().focus()

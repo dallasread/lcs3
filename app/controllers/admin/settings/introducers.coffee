@@ -10,4 +10,6 @@ Lively.Controllers["/admin/settings/introducers"] =
 				required: false
 				type: "text"
 				validator: ""
-				ordinal: if "introducers" of Lively.Vars then Object.keys(Lively.Vars.introducers).length else 0
+				ordinal: if "introducers" of Lively.Vars then Object.keys(Lively.Vars.introducers).length - 2 else 0
+			, ->
+				$(Lively.Config.container).find(".introducers tbody tr:visible:last input:visible, .introducers tbody tr:visible:last textarea:visible").first().focus()

@@ -10,8 +10,12 @@
 			<option value="email" {{#is validator "email"}}selected="selected"{{/is}}>Email Address</option>
 		</select>
 	</td>
-	<td><input type="text" {{bind-attr value="ordinal" event="blur"}}></td>
-	<td>
+	<td class="align_center">
+		<button class="fluid_width small gray green_hover">
+			<i class="fa fa-arrows"></i>
+		</button>
+	</td>
+	<td class="align_center">
 		<button class="fluid_width small gray red_hover" {{action click="delete"}}>
 			<i class="fa fa-trash"></i>
 		</button>

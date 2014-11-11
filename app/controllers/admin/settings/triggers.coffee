@@ -11,3 +11,5 @@ Lively.Controllers["/admin/settings/triggers"] =
 				include: "*"
 				message:
 					body: ""
+			, ->
+				$(Lively.Config.container).find(".triggers tbody tr:visible:last input:visible, .triggers tbody tr:visible:last textarea:visible").first().focus()

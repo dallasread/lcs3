@@ -7,5 +7,4 @@ Lively.Controllers["/admin/agents"] =
 			Lively.create "agent",
 				name: ""
 				email: ""
-				active: false
 				online: false

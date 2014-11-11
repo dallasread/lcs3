@@ -1,18 +1,19 @@
 Lively.Controllers["/admin"] =
 	before: ->
-		if !Lively.fn.isAgent()
-			Lively.fetchPath "/chatbox"
-		else
-			$("body").addClass "lcs-fixed"
-			Lively.find "agent", { chatbox: Lively.Vars.chatbox_key }
+		$("body").addClass "lcs-fixed"
+		Lively.find "agent", { chatbox: Lively.Vars.chatbox_key }
 	
 	after: ->
-		if Lively.Vars["agents"][Lively.Vars.me._key]["online"]
-			$(".toggle_status").removeClass("offline").addClass("online")
+		if !Lively.fn.isAgent()
+			Lively.fetchPath "/chatbox/signin"
+			$("body").removeClass "lcs-fixed"
+		else
+			if Lively.Vars["agents"][Lively.Vars.me._key]["online"]
+				$(".toggle_status").removeClass("offline").addClass("online")
 		
 	actions:
 		closeAdmin: ->
-			Lively.fetchPath "/"
+			Lively.fetchPath "/prompter"
 
 		toggleStatus: ->
 			$(".toggle_status").toggleClass("offline").toggleClass("online")
