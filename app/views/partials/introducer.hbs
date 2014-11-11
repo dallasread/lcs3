@@ -1,21 +1,26 @@
 <tr>
-	<td><input type="text" {{bind-attr value="name" event="blur"}}></td>
-	<td><input type="text" {{bind-attr value="permalink" event="blur"}}></td>
-	<td><input type="text" {{bind-attr value="required" event="blur"}}></td>
-	<td><input type="text" {{bind-attr value="type" event="blur"}}></td>
-	<td>
+	<td style="width: 17%; "><input type="checkbox" {{bind-attr value="required" event="toggle"}}></td>
+	<td style="width: 17%; "><input type="text" {{bind-attr value="name" event="blur"}}></td>
+	<td style="width: 17%; "><input type="text" {{bind-attr value="permalink" event="blur"}}></td>
+	<td style="width: 17%; ">
+		<select {{bind-attr value="type" event="change"}}>
+			<option value="text" {{#is type "text"}}selected="selected"{{/is}}>Text</option>
+			<option value="email" {{#is type "email"}}selected="selected"{{/is}}>Email Address</option>
+		</select>
+	</td>
+	<td style="width: 17%; ">
 		<select {{bind-attr value="validator" event="change"}}>
 			<option value="" {{#is validator "email"}}selected="selected"{{/is}}>None</option>
 			<option value="presence" {{#is validator "presence"}}selected="selected"{{/is}}>Exists</option>
 			<option value="email" {{#is validator "email"}}selected="selected"{{/is}}>Email Address</option>
 		</select>
 	</td>
-	<td class="align_center">
-		<button class="fluid_width small gray green_hover">
+	<td class="align_center" style="width: 17%; ">
+		<a class="button fluid_width small gray handle">
 			<i class="fa fa-arrows"></i>
-		</button>
+		</a>
 	</td>
-	<td class="align_center">
+	<td class="align_center" style="width: 17%; ">
 		<button class="fluid_width small gray red_hover" {{action click="delete"}}>
 			<i class="fa fa-trash"></i>
 		</button>

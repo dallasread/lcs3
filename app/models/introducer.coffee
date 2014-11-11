@@ -7,4 +7,3 @@ Lively.Models["introducer"] =
 		type: "string"
 		required: "boolean"
 		validator: "string"
-		ordinal: "integer"

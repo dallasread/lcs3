@@ -82,14 +82,13 @@
 		  ".read": true,
 		  "$chatbox_id": {
 				"$introducer_id": {
-					".write": "root.child('agents/' + $chatbox_id + '/' + auth.uid).exists()",
-					"name": { ".validate": "(!data.exists() && newData.exists()) || (newData.isString() && newData.val().length > 0)" },
-					"permalink": { ".validate": "(!data.exists() && newData.exists()) || (newData.isString() && newData.val().length > 0)" },
-					"type": { ".validate": "(!data.exists() && newData.exists()) || (newData.isString() && newData.val().length > 0)" },
-					"ordinal": { ".validate": true },
-					"required": { ".validate": true },
-					"validator": { ".validate": true },
-					"$other": { ".validate": false }
+					".write": "root.child('agents/' + $chatbox_id + '/' + auth.uid).exists()"
+					// "name": { ".validate": "(!data.exists()) || (newData.isString() && newData.val().length > 0)" },
+					// "permalink": { ".validate": "(!data.exists()) || (newData.isString() && newData.val().length > 0)" },
+					// "type": { ".validate": "(newData.isString() && newData.val().length > 0)" },
+					// "validator": { ".validate": "(newData.isString() && newData.val().length > 0)" },
+					// "required": { ".validate": "newData.isBoolean()" },
+					// "$other": { ".validate": true }
 				}
 			}
 		},

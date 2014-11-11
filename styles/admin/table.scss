@@ -1,11 +1,30 @@
 #lcs {
 	.table {
 		width: 100%;
+		
+		thead {
+			tr {
+				border-bottom: 1px solid #ccc;
+				border-top: 1px solid #ccc;
+			}
+		}
+		
+		tbody {
+			tr {
+				border-bottom: 1px solid #ccc;
+			}
+		}
+		
+		.ui-sortable-helper {
+			box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+			
+			td {
+				border-top: 1px solid #ccc;
+				border-bottom: 1px solid #ccc;
+			}
+		}
 
 		tr {
-			border-top: 1px solid #ccc;
-			border-bottom: 1px solid #ccc;
-			
 			th, td {
 				padding: 15px 10px;
 				text-align: left;
@@ -18,6 +37,7 @@
 				text-transform: uppercase;
 				color: #444;
 				font-weight: bold;
+				border-bottom: 1px solid #ccc;
 			}
 		
 			td {
@@ -25,6 +45,7 @@
 				line-height: 24px;
 				color: #444;
 				vertical-align: middle;
+				background: #fff;
 				
 				&.header_column {
 					font-weight: bold;
